@@ -1,0 +1,1181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DelightMate - Voice Assistant</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #50b3a2;
+            margin-bottom: 20px;
+        }
+        .controls {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 20px 0;
+        }
+        button {
+            background: #50b3a2;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 50px;
+            cursor: pointer;
+            margin: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            min-width: 200px;
+        }
+        button:hover {
+            background: #3a9c8c;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        button:disabled {
+            background: #cccccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        .manual-buttons {
+            display: flex;
+            margin-top: 10px;
+        }
+        .manual-buttons button {
+            min-width: 130px;
+            font-size: 14px;
+            padding: 8px 16px;
+        }
+        .record-button {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: #ff5252;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        .record-button:hover {
+            transform: scale(1.05);
+        }
+        .record-button.recording {
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); box-shadow: 0 4px 8px rgba(0,0,0,0.2); }
+            50% { transform: scale(1.05); box-shadow: 0 6px 12px rgba(255,82,82,0.3); }
+            100% { transform: scale(1); box-shadow: 0 4px 8px rgba(0,0,0,0.2); }
+        }
+        .transcript, .response {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f8f8;
+            border-left: 4px solid #50b3a2;
+            border-radius: 4px;
+        }
+        .response {
+            border-left-color: #ff5252;
+        }
+        .audio-player {
+            width: 100%;
+            margin-top: 20px;
+        }
+        .status {
+            text-align: center;
+            font-style: italic;
+            color: #666;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+        .volume-meter {
+            width: 100%;
+            height: 20px;
+            background-color: #eee;
+            border-radius: 10px;
+            margin: 10px 0;
+            overflow: hidden;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .volume-level {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #50b3a2, #3a9c8c);
+            transition: width 0.1s;
+            border-radius: 10px;
+        }
+        .conversation-log {
+            margin-top: 30px;
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #eee;
+            padding: 15px;
+            border-radius: 8px;
+            background-color: #fafafa;
+        }
+        .user-message, .ai-message {
+            padding: 12px;
+            margin: 8px 0;
+            border-radius: 18px;
+            position: relative;
+            max-width: 80%;
+            word-wrap: break-word;
+        }
+        .user-message {
+            background-color: #e3f2fd;
+            margin-left: auto;
+            border-bottom-right-radius: 4px;
+            color: #0d47a1;
+        }
+        .ai-message {
+            background-color: #f1f1f1;
+            margin-right: auto;
+            border-bottom-left-radius: 4px;
+            color: #333;
+        }
+        .settings-panel {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #eee;
+            border-radius: 8px;
+        }
+        .settings-panel h3 {
+            margin-top: 0;
+            color: #50b3a2;
+        }
+        .settings-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .settings-row label {
+            flex: 1;
+        }
+        .settings-row input {
+            width: 100px;
+            padding: 5px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .settings-toggle {
+            cursor: pointer;
+            color: #50b3a2;
+            text-decoration: underline;
+            margin-top: 10px;
+            display: inline-block;
+        }
+        .debug-info {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+        .audio-visualizer {
+            width: 100%;
+            height: 60px;
+            background-color: #111;
+            margin: 10px 0;
+            border-radius: 8px;
+            position: relative;
+            overflow: hidden;
+        }
+        .visualizer-canvas {
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>DelightMate Voice Assistant</h1>
+        
+        <div class="controls">
+            <div class="record-button" id="recordButton">
+                <svg width="30" height="30" viewBox="0 0 24 24" fill="white">
+                    <path d="M12,2A3,3 0 0,1 15,5V11A3,3 0 0,1 12,14A3,3 0 0,1 9,11V5A3,3 0 0,1 12,2M19,11C19,14.53 16.39,17.44 13,17.93V21H11V17.93C7.61,17.44 5,14.53 5,11H7A5,5 0 0,0 12,16A5,5 0 0,0 17,11H19Z" />
+                </svg>
+            </div>
+            <div>
+                <button id="startButton">Start Conversation</button>
+                <button id="stopButton" disabled>End Conversation</button>
+            </div>
+            <div class="manual-buttons">
+                <button id="manualPauseButton" disabled>Manual Send</button>
+                <button id="toggleSettingsButton">Show Settings</button>
+            </div>
+            <div class="status" id="status">Ready to start conversation...</div>
+            
+            <div class="audio-visualizer">
+                <canvas id="visualizerCanvas" class="visualizer-canvas"></canvas>
+            </div>
+            
+            <div class="volume-meter">
+                <div class="volume-level" id="volumeLevel"></div>
+            </div>
+        </div>
+        
+        <div class="settings-panel" id="settingsPanel" style="display: none;">
+            <h3>Settings</h3>
+            <div class="settings-row">
+                <label for="silenceThreshold">Silence Threshold:</label>
+                <input type="number" id="silenceThreshold" min="1" max="30" value="15">
+            </div>
+            <div class="settings-row">
+                <label for="pauseThreshold">Pause Duration (seconds):</label>
+                <input type="number" id="pauseThreshold" min="0.5" max="5" step="0.1" value="2.0">
+            </div>
+            <div class="settings-row">
+                <label for="echoCancel">Echo Cancellation:</label>
+                <input type="checkbox" id="echoCancel" checked>
+            </div>
+            <div class="settings-row">
+                <label for="noiseSuppress">Noise Suppression:</label>
+                <input type="checkbox" id="noiseSuppress" checked>
+            </div>
+            <div class="settings-row">
+                <label for="continuousMode">Continuous Mode:</label>
+                <input type="checkbox" id="continuousMode" checked>
+            </div>
+            <div class="debug-info" id="debugInfo"></div>
+        </div>
+        
+        <div class="transcript" id="transcript" style="display: none;">
+            <h3>Current Message:</h3>
+            <p id="transcriptText"></p>
+        </div>
+        
+        <div class="conversation-log" id="conversationLog">
+            <!-- Conversation history will be added here -->
+            <div class="ai-message">Welcome! I'm your DelightMate assistant. Click "Start Conversation" to begin.</div>
+        </div>
+        
+        <audio id="audioPlayer" class="audio-player" style="display: none;"></audio>
+    </div>
+
+    <script>
+        // DOM elements
+        const startButton = document.getElementById('startButton');
+        const stopButton = document.getElementById('stopButton');
+        const manualPauseButton = document.getElementById('manualPauseButton');
+        const recordButton = document.getElementById('recordButton');
+        const transcriptDiv = document.getElementById('transcript');
+        const transcriptText = document.getElementById('transcriptText');
+        const audioPlayer = document.getElementById('audioPlayer');
+        const statusElement = document.getElementById('status');
+        const volumeLevel = document.getElementById('volumeLevel');
+        const conversationLog = document.getElementById('conversationLog');
+        const toggleSettingsButton = document.getElementById('toggleSettingsButton');
+        const settingsPanel = document.getElementById('settingsPanel');
+        const silenceThresholdInput = document.getElementById('silenceThreshold');
+        const pauseThresholdInput = document.getElementById('pauseThreshold');
+        const echoCancelCheckbox = document.getElementById('echoCancel');
+        const noiseSuppressCheckbox = document.getElementById('noiseSuppress');
+        const debugInfo = document.getElementById('debugInfo');
+        const visualizerCanvas = document.getElementById('visualizerCanvas');
+        const canvasCtx = visualizerCanvas.getContext('2d');
+        
+        // Create a dedicated state management object to centralize our application state
+        // This will help us keep track of state across different function calls
+        const AppState = {
+            // Recording state
+            isRecording: false,
+            isProcessing: false,
+            pauseDetected: false,
+            silenceStart: null,
+            hasDetectedAudio: false,
+            significantSpeechDetected: false,
+            
+            // Audio resources
+            mediaRecorder: null,
+            audioChunks: [],
+            audioBlob: null,
+            audioContext: null,
+            analyser: null,
+            source: null,
+            
+            // Timers and tracking
+            continuousRecordingTimer: null,
+            lastProcessedTime: 0,
+            
+            // Conversation state
+            conversationActive: false,
+            
+            // Debug
+            logPrefix: '🎙️ VoiceAssistant:',
+            
+            // Methods for state management
+            startConversation() {
+                this.conversationActive = true;
+                startButton.disabled = true;
+                stopButton.disabled = false;
+                manualPauseButton.disabled = false;
+                console.log(`${this.logPrefix} Conversation started`);
+            },
+            
+            endConversation() {
+                this.conversationActive = false;
+                startButton.disabled = false;
+                stopButton.disabled = true;
+                manualPauseButton.disabled = true;
+                this.resetAudioState();
+                console.log(`${this.logPrefix} Conversation ended`);
+            },
+            
+            resetAudioState() {
+                this.isRecording = false;
+                this.isProcessing = false;
+                this.pauseDetected = false;
+                this.silenceStart = null;
+                this.hasDetectedAudio = false;
+                this.significantSpeechDetected = false;
+                this.audioChunks = [];
+                console.log(`${this.logPrefix} Audio state reset`);
+            },
+            
+            debug() {
+                console.log(`${this.logPrefix} State: 
+                    Recording: ${this.isRecording},
+                    Processing: ${this.isProcessing}, 
+                    Conversation: ${this.conversationActive},
+                    startButton.disabled: ${startButton.disabled},
+                    stopButton.disabled: ${stopButton.disabled}
+                `);
+            }
+        };
+
+        // Audio processing variables - using AppState now for most of these
+        let volumeData = [];
+        let pauseTimeout = null;
+        
+        // Settings with default values
+        let settings = {
+            silenceThreshold: 15,
+            pauseThreshold: 2.0, // Silence pause threshold in seconds
+            echoCancel: true,
+            noiseSuppress: true,
+            continuousMode: true,
+            minAudioSize: 10000, // Minimum audio size to consider as valid speech (bytes)
+            significantAudioThreshold: 25 // Threshold for significant audio (higher than silence threshold)
+        };
+        
+        // Draw visualizer animation
+        function drawVisualizer() {
+            if (!AppState.analyser || !AppState.isRecording) {
+                return;
+            }
+            
+            const WIDTH = visualizerCanvas.width;
+            const HEIGHT = visualizerCanvas.height;
+            
+            requestAnimationFrame(drawVisualizer);
+            
+            const bufferLength = AppState.analyser.frequencyBinCount;
+            const dataArray = new Uint8Array(bufferLength);
+            AppState.analyser.getByteFrequencyData(dataArray);
+            
+            canvasCtx.fillStyle = 'rgb(20, 20, 20)';
+            canvasCtx.fillRect(0, 0, WIDTH, HEIGHT);
+            
+            const barWidth = (WIDTH / bufferLength) * 2.5;
+            let barHeight;
+            let x = 0;
+            
+            for (let i = 0; i < bufferLength; i++) {
+                barHeight = dataArray[i] / 2;
+                
+                // Calculate color based on frequency
+                const r = 80 + (dataArray[i] / 255 * 175);
+                const g = 179 - (dataArray[i] / 255 * 40);
+                const b = 162 - (dataArray[i] / 255 * 40);
+                
+                canvasCtx.fillStyle = `rgb(${r}, ${g}, ${b})`;
+                canvasCtx.fillRect(x, HEIGHT - barHeight, barWidth, barHeight);
+                
+                x += barWidth + 1;
+            }
+        }
+        
+        // Initialize canvas
+        function initCanvas() {
+            visualizerCanvas.width = visualizerCanvas.clientWidth;
+            visualizerCanvas.height = visualizerCanvas.clientHeight;
+            canvasCtx.clearRect(0, 0, visualizerCanvas.width, visualizerCanvas.height);
+        }
+        
+        // Settings controls
+        toggleSettingsButton.addEventListener('click', () => {
+            settingsPanel.style.display = settingsPanel.style.display === 'none' ? 'block' : 'none';
+            toggleSettingsButton.textContent = settingsPanel.style.display === 'none' ? 'Show Settings' : 'Hide Settings';
+        });
+        
+        // Update settings when inputs change
+        silenceThresholdInput.addEventListener('change', function() {
+            settings.silenceThreshold = parseFloat(this.value);
+        });
+        
+        pauseThresholdInput.addEventListener('change', function() {
+            settings.pauseThreshold = parseFloat(this.value);
+        });
+        
+        echoCancelCheckbox.addEventListener('change', function() {
+            settings.echoCancel = this.checked;
+            if (AppState.isRecording) {
+                // Need to restart recording to apply this setting
+                stopRecording();
+                setTimeout(startRecording, 500);
+            }
+        });
+        
+        noiseSuppressCheckbox.addEventListener('change', function() {
+            settings.noiseSuppress = this.checked;
+            if (AppState.isRecording) {
+                // Need to restart recording to apply this setting
+                stopRecording();
+                setTimeout(startRecording, 500);
+            }
+        });
+        
+        // Add event listener for continuous mode checkbox
+        const continuousModeCheckbox = document.getElementById('continuousMode');
+        continuousModeCheckbox.addEventListener('change', function() {
+            settings.continuousMode = this.checked;
+        });
+        
+        // Start/stop controls
+        startButton.addEventListener('click', startConversation);
+        stopButton.addEventListener('click', endConversation);
+        recordButton.addEventListener('click', toggleRecording);
+        manualPauseButton.addEventListener('click', pauseAndProcess);
+        
+        // Initialize AudioContext (for volume analysis)
+        function initAudioContext() {
+            try {
+                // Initialize or reset
+                if (AppState.audioContext) {
+                    AppState.audioContext.close();
+                }
+                
+                window.AudioContext = window.AudioContext || window.webkitAudioContext;
+                AppState.audioContext = new AudioContext();
+                AppState.analyser = AppState.audioContext.createAnalyser();
+                AppState.analyser.fftSize = 256;
+                
+                // Initialize canvas when audio context is created
+                initCanvas();
+                
+                console.log(`${AppState.logPrefix} Audio context initialized successfully`);
+            } catch (e) {
+                console.error(`${AppState.logPrefix} AudioContext not supported or error initializing:`, e);
+                statusElement.textContent = "Audio features not supported in your browser";
+            }
+        }
+        
+        // Start the conversation session
+        function startConversation() {
+            // Update state
+            AppState.startConversation();
+            
+            // Initialize audio components
+            initAudioContext();
+            statusElement.textContent = "Starting microphone...";
+            
+            // Load settings from inputs
+            settings.silenceThreshold = parseFloat(silenceThresholdInput.value);
+            settings.pauseThreshold = parseFloat(pauseThresholdInput.value);
+            settings.echoCancel = echoCancelCheckbox.checked;
+            settings.noiseSuppress = noiseSuppressCheckbox.checked;
+            
+            // Begin recording
+            startRecording();
+        }
+        
+        // End the conversation session
+        function endConversation() {
+            console.log(`${AppState.logPrefix} Ending conversation`);
+            
+            // Stop current recording if active
+            if (AppState.isRecording) {
+                stopRecording();
+            }
+            
+            // Clear any pending timers
+            if (pauseTimeout) {
+                clearTimeout(pauseTimeout);
+                pauseTimeout = null;
+            }
+            
+            // Clear continuous recording timer
+            if (AppState.continuousRecordingTimer) {
+                clearInterval(AppState.continuousRecordingTimer);
+                AppState.continuousRecordingTimer = null;
+            }
+            
+            // Update application state
+            AppState.endConversation();
+            
+            // Update UI
+            statusElement.textContent = "Conversation ended";
+            addToConversationLog("Thanks for chatting with me!", "ai");
+            
+            // Clear audio visualizer
+            if (canvasCtx) {
+                canvasCtx.clearRect(0, 0, visualizerCanvas.width, visualizerCanvas.height);
+            }
+        }
+        
+        // Toggle recording on/off
+        function toggleRecording() {
+            if (AppState.isRecording) {
+                pauseAndProcess();
+            } else if (!startButton.disabled) {
+                startConversation();
+            }
+        }
+        
+        // Start recording audio
+        async function startRecording() {
+            if (AppState.isRecording) {
+                console.log(`${AppState.logPrefix} Already recording, not starting again`);
+                return;
+            }
+            
+            console.log(`${AppState.logPrefix} Starting recording...`);
+            AppState.debug();
+            
+            // Reset state variables
+            AppState.isRecording = true;
+            AppState.pauseDetected = false;
+            AppState.silenceStart = null;
+            AppState.hasDetectedAudio = false;
+            AppState.significantSpeechDetected = false;
+            AppState.audioChunks = [];
+            
+            try {
+                // Make sure audio context is initialized
+                if (!AppState.audioContext || !AppState.analyser) {
+                    console.log(`${AppState.logPrefix} Re-initializing audio context`);
+                    initAudioContext();
+                }
+                
+                // Create constraints with echo cancellation and noise suppression
+                const constraints = { 
+                    audio: {
+                        echoCancellation: settings.echoCancel,
+                        noiseSuppression: settings.noiseSuppress,
+                        autoGainControl: true
+                    }
+                };
+                
+                statusElement.textContent = "Accessing microphone...";
+                const stream = await navigator.mediaDevices.getUserMedia(constraints);
+                
+                // Start media recorder with higher bitrate for better quality
+                const options = { mimeType: 'audio/webm;codecs=opus', audioBitsPerSecond: 128000 };
+                AppState.mediaRecorder = new MediaRecorder(stream, options);
+                
+                // Set up audio analysis for pause detection
+                if (AppState.audioContext && AppState.analyser) {
+                    // Disconnect previous source if exists
+                    if (AppState.source) {
+                        AppState.source.disconnect();
+                    }
+                    
+                    AppState.source = AppState.audioContext.createMediaStreamSource(stream);
+                    AppState.source.connect(AppState.analyser);
+                    
+                    // Start monitoring volume
+                    monitorVolume();
+                    
+                    // Start visualizer
+                    drawVisualizer();
+                } else {
+                    throw new Error("Audio context or analyser not initialized");
+                }
+                
+                AppState.mediaRecorder.addEventListener('dataavailable', event => {
+                    if (event.data.size > 0) {
+                        AppState.audioChunks.push(event.data);
+                    }
+                });
+                
+                AppState.mediaRecorder.addEventListener('stop', () => {
+                    console.log(`${AppState.logPrefix} MediaRecorder stopped, chunks: ${AppState.audioChunks.length}`);
+                    if (AppState.audioChunks.length > 0) {
+                        AppState.audioBlob = new Blob(AppState.audioChunks, { type: 'audio/webm;codecs=opus' });
+                        console.log(`${AppState.logPrefix} Audio blob created, size: ${AppState.audioBlob.size}`);
+                        if (!AppState.isProcessing) {
+                            processAudio();
+                        }
+                    }
+                });
+                
+                AppState.mediaRecorder.start(100); // Collect data in 100ms chunks
+                recordButton.classList.add('recording');
+                statusElement.textContent = "Listening...";
+                
+                // Enable manual pause
+                manualPauseButton.disabled = false;
+                
+                // Start continuous recording timer if enabled
+                if (settings.continuousMode) {
+                    startContinuousRecordingTimer();
+                }
+                
+            } catch (error) {
+                console.error(`${AppState.logPrefix} Error starting recording:`, error);
+                statusElement.textContent = "Error starting recording: " + error.message;
+                
+                // Reset state on error
+                AppState.isRecording = false;
+                startButton.disabled = false;
+                stopButton.disabled = true;
+            }
+        }
+        
+        // New function to handle continuous recording
+        function startContinuousRecordingTimer() {
+            // Clear any existing timer
+            if (AppState.continuousRecordingTimer) {
+                clearInterval(AppState.continuousRecordingTimer);
+                AppState.continuousRecordingTimer = null;
+            }
+            
+            // We don't need the interval timer anymore - we'll use the silence detection pattern instead
+            // The system will now continuously listen until manually stopped
+            console.log(`${AppState.logPrefix} Continuous listening mode active - will process on speech followed by silence`);
+        }
+        
+        // Stop recording
+        function stopRecording() {
+            console.log(`${AppState.logPrefix} Stopping recording`);
+            
+            // Only stop if we have an active recorder
+            if (AppState.mediaRecorder && AppState.mediaRecorder.state !== 'inactive') {
+                AppState.mediaRecorder.stop();
+                AppState.mediaRecorder.stream.getTracks().forEach(track => track.stop());
+            }
+            
+            AppState.isRecording = false;
+            recordButton.classList.remove('recording');
+            manualPauseButton.disabled = true;
+            
+            // Clear continuous recording timer
+            if (AppState.continuousRecordingTimer) {
+                clearInterval(AppState.continuousRecordingTimer);
+                AppState.continuousRecordingTimer = null;
+            }
+            
+            // Clear visualizer
+            if (canvasCtx) {
+                canvasCtx.clearRect(0, 0, visualizerCanvas.width, visualizerCanvas.height);
+            }
+        }
+        
+        // Monitor volume and detect silence
+        function monitorVolume() {
+            if (!AppState.analyser || !AppState.isRecording) {
+                console.log(`${AppState.logPrefix} Cannot monitor volume - analyser or recording state invalid`);
+                return;
+            }
+
+            const bufferLength = AppState.analyser.frequencyBinCount;
+            const volumeData = new Uint8Array(bufferLength);
+            AppState.analyser.getByteFrequencyData(volumeData);
+
+            // Calculate average volume level
+            let sum = 0;
+            for (let i = 0; i < bufferLength; i++) {
+                sum += volumeData[i];
+            }
+            const avg = sum / bufferLength;
+            
+            // Update volume meter
+            const volumePercent = Math.min(100, Math.max(0, avg * 2));
+            volumeLevel.style.width = volumePercent + '%';
+            
+            // Change color based on volume
+            if (volumePercent > 70) {
+                volumeLevel.style.backgroundColor = '#ff4444'; // Red for loud
+            } else if (volumePercent > 30) {
+                volumeLevel.style.backgroundColor = '#44ff44'; // Green for normal
+            } else {
+                volumeLevel.style.backgroundColor = '#4444ff'; // Blue for quiet
+            }
+            
+            // Check if we've detected significant speech (using a higher threshold)
+            if (avg > settings.significantAudioThreshold) {
+                if (!AppState.significantSpeechDetected) {
+                    console.log(`${AppState.logPrefix} Speech detected - volume level: ${avg.toFixed(1)}`);
+                }
+                AppState.significantSpeechDetected = true;
+                // Reset silence start when speech is detected
+                AppState.silenceStart = null;
+                
+                // Only log occasionally to reduce console spam
+                if (Math.random() < 0.02) {
+                    console.log(`${AppState.logPrefix} Detected speech: ${avg.toFixed(2)}`);
+                }
+            }
+            
+            // Regular audio detection for visualization
+            if (avg > settings.silenceThreshold) {
+                AppState.hasDetectedAudio = true;
+            }
+            
+            // Silence detection logic - only trigger processing if we had significant speech followed by silence
+            if (AppState.significantSpeechDetected) {
+                if (avg < settings.silenceThreshold) {
+                    // Start silence timer if not already started
+                    if (!AppState.silenceStart) {
+                        AppState.silenceStart = Date.now();
+                        console.log(`${AppState.logPrefix} Silence started after speech`);
+                    }
+                    
+                    // Check if silence has lasted long enough to be a pause
+                    const silenceDuration = (Date.now() - AppState.silenceStart) / 1000;
+                    
+                    // Update debug status more frequently during silence
+                    if (Math.random() < 0.1) {
+                        console.log(`${AppState.logPrefix} Silence duration: ${silenceDuration.toFixed(1)}s`);
+                    }
+                    
+                    // Only process when:
+                    // 1. We've detected significant speech
+                    // 2. Followed by silence for the pause threshold duration
+                    // 3. We're not already processing
+                    // 4. Enough time has passed since last processing
+                    if (silenceDuration > settings.pauseThreshold && !AppState.pauseDetected && !AppState.isProcessing &&
+                        (Date.now() - AppState.lastProcessedTime > 3000)) {
+                        
+                        console.log(`${AppState.logPrefix} Processing after ${silenceDuration.toFixed(1)}s of silence following speech`);
+                        AppState.pauseDetected = true;
+                        pauseAndProcess();
+                    }
+                } else {
+                    // Reset silence timer if sound detected
+                    if (AppState.silenceStart) {
+                        console.log(`${AppState.logPrefix} Silence interrupted - continuing to listen`);
+                    }
+                    AppState.silenceStart = null;
+                }
+            }
+            
+            // Add debug info
+            if (debugInfo) {
+                debugInfo.textContent = `Vol: ${avg.toFixed(1)}, Speech: ${AppState.significantSpeechDetected}, Silence: ${AppState.silenceStart ? ((Date.now() - AppState.silenceStart)/1000).toFixed(1) + 's' : 'No'}, Active: ${AppState.conversationActive}`;
+            }
+            
+            // Continue monitoring as long as we're recording
+            if (AppState.isRecording) {
+                requestAnimationFrame(monitorVolume);
+            } else {
+                console.log(`${AppState.logPrefix} Volume monitoring stopped - recording ended`);
+            }
+        }
+        
+        // Pause recording and process current audio
+        function pauseAndProcess() {
+            console.log(`${AppState.logPrefix} Pausing to process audio`);
+            
+            if (!AppState.isRecording || AppState.isProcessing) {
+                console.log(`${AppState.logPrefix} Cannot pause - not recording or already processing`);
+                return;
+            }
+            
+            // Stop the current recorder to get the data
+            const currentMediaRecorder = AppState.mediaRecorder;
+            currentMediaRecorder.stop();
+            
+            statusElement.textContent = "Processing your message...";
+            transcriptDiv.style.display = 'none';
+            
+            // Update state
+            AppState.isRecording = false;
+            
+            // Store the callback on the window object so it can be accessed from anywhere
+            window.resumeRecordingCallback = resumeRecording;
+        }
+        
+        // resumeRecording function - improved to fix visualization and silence detection
+        const resumeRecording = async () => {
+            console.log(`${AppState.logPrefix} Resuming recording callback triggered`);
+            console.log(`${AppState.logPrefix} Conversation active: ${AppState.conversationActive}, startButton.disabled: ${startButton.disabled}`);
+            
+            // Important: Use AppState.conversationActive to determine if we should resume
+            // Don't rely on button state which can be out of sync
+            if (AppState.conversationActive) {
+                console.log(`${AppState.logPrefix} Resuming recording - conversation is active`);
+                
+                try {
+                    // Reset AppState for a fresh start with the new recording session
+                    AppState.isRecording = false;
+                    AppState.isProcessing = false;
+                    AppState.significantSpeechDetected = false;
+                    AppState.pauseDetected = false;
+                    AppState.silenceStart = null;
+                    AppState.audioChunks = [];
+                    
+                    // CRITICAL FIX: Instead of trying to reuse the old stream,
+                    // request a fresh microphone stream each time
+                    const constraints = { 
+                        audio: {
+                            echoCancellation: settings.echoCancel,
+                            noiseSuppression: settings.noiseSuppress,
+                            autoGainControl: true
+                        }
+                    };
+                    
+                    console.log(`${AppState.logPrefix} Requesting fresh microphone stream`);
+                    const stream = await navigator.mediaDevices.getUserMedia(constraints);
+                    
+                    // Reinitialize the audio context if needed
+                    if (!AppState.audioContext || !AppState.analyser) {
+                        console.log(`${AppState.logPrefix} Reinitializing audio context`);
+                        initAudioContext();
+                    }
+                    
+                    // Start a new recorder with the fresh stream
+                    const options = { mimeType: 'audio/webm;codecs=opus', audioBitsPerSecond: 128000 };
+                    AppState.mediaRecorder = new MediaRecorder(stream, options);
+                    
+                    // Set up event handlers again
+                    AppState.mediaRecorder.addEventListener('dataavailable', event => {
+                        if (event.data.size > 0) {
+                            AppState.audioChunks.push(event.data);
+                        }
+                    });
+                    
+                    AppState.mediaRecorder.addEventListener('stop', () => {
+                        if (AppState.audioChunks.length > 0) {
+                            AppState.audioBlob = new Blob(AppState.audioChunks, { type: 'audio/webm;codecs=opus' });
+                            if (!AppState.isProcessing) {
+                                processAudio();
+                            }
+                        }
+                    });
+                    
+                    // Set up audio analysis again with the fresh stream
+                    if (AppState.audioContext && AppState.analyser) {
+                        // Disconnect previous source if exists
+                        if (AppState.source) {
+                            AppState.source.disconnect();
+                        }
+                        
+                        AppState.source = AppState.audioContext.createMediaStreamSource(stream);
+                        AppState.source.connect(AppState.analyser);
+                        
+                        // Start recording first, then visualization
+                        AppState.mediaRecorder.start(100);
+                        AppState.isRecording = true;
+                        
+                        // Start monitoring volume with the fresh stream
+                        // Using setTimeout to ensure the recorder is fully started
+                        setTimeout(() => {
+                            console.log(`${AppState.logPrefix} Starting volume monitoring and visualization`);
+                            monitorVolume();
+                            drawVisualizer();
+                        }, 100);
+                    } else {
+                        throw new Error("Audio context or analyser not properly initialized");
+                    }
+                    
+                    recordButton.classList.add('recording');
+                    statusElement.textContent = "Listening...";
+                    
+                    console.log(`${AppState.logPrefix} Successfully restarted recording with fresh stream`);
+                    
+                    // Debug state
+                    AppState.debug();
+                    
+                } catch (error) {
+                    console.error(`${AppState.logPrefix} Error resuming recording:`, error);
+                    statusElement.textContent = "Error resuming: " + error.message;
+                    
+                    // Try to fully restart recording as fallback
+                    console.log(`${AppState.logPrefix} Falling back to complete restart`);
+                    setTimeout(startRecording, 1000);
+                }
+            } else {
+                console.log(`${AppState.logPrefix} Not resuming recording - conversation has ended`);
+            }
+        };
+        
+        // Process recorded audio
+        async function processAudio() {
+            if (!AppState.audioBlob || AppState.audioBlob.size === 0 || AppState.isProcessing) {
+                console.log(`${AppState.logPrefix} Cannot process audio - no blob, empty blob, or already processing`);
+                return;
+            }
+            
+            AppState.isProcessing = true;
+            AppState.lastProcessedTime = Date.now();
+            console.log(`${AppState.logPrefix} Processing audio blob of size: ${AppState.audioBlob.size} bytes`);
+            
+            // Skip processing if the audio is too small to contain meaningful speech
+            if (AppState.audioBlob.size < settings.minAudioSize) {
+                console.log(`${AppState.logPrefix} Audio too small to contain speech, skipping processing`);
+                AppState.isProcessing = false;
+                
+                // Call the resume recording callback if available
+                if (window.resumeRecordingCallback) {
+                    console.log(`${AppState.logPrefix} Calling resume callback after skipping small audio`);
+                    window.resumeRecordingCallback();
+                    window.resumeRecordingCallback = null;
+                }
+                return;
+            }
+            
+            // Create FormData with the audio blob
+            const formData = new FormData();
+            formData.append('audio', AppState.audioBlob);
+            
+            try {
+                // Step 1: Speech to Text
+                statusElement.textContent = "Converting speech to text...";
+                console.log(`${AppState.logPrefix} Sending audio to STT API`);
+                
+                const sttResponse = await fetch('/api/stt', {
+                    method: 'POST',
+                    body: formData,
+                    // Add timeout to prevent hanging requests
+                    signal: AbortSignal.timeout(10000) // 10 second timeout
+                });
+                
+                if (!sttResponse.ok) {
+                    throw new Error(`STT server error: ${sttResponse.status} - ${await sttResponse.text()}`);
+                }
+                
+                const sttData = await sttResponse.json();
+                if (!sttData.success) {
+                    throw new Error(sttData.error || 'Failed to transcribe audio');
+                }
+                
+                const transcript = sttData.transcript;
+                console.log(`${AppState.logPrefix} Received transcript: "${transcript}"`);
+                
+                if (!transcript || transcript.trim() === '') {
+                    // Silently resume recording without any messages about no speech
+                    console.log(`${AppState.logPrefix} No speech detected in transcription`);
+                    AppState.isProcessing = false;
+                    if (window.resumeRecordingCallback) {
+                        console.log(`${AppState.logPrefix} Calling resume callback after empty transcript`);
+                        window.resumeRecordingCallback();
+                        window.resumeRecordingCallback = null;
+                    }
+                    return;
+                }
+                
+                // Skip if transcript contains only filler words
+                const fillerWords = ['um', 'uh', 'mmm', 'hmm', 'ah', 'er'];
+                const cleanTranscript = transcript.toLowerCase().trim();
+                if (fillerWords.some(word => cleanTranscript === word)) {
+                    console.log(`${AppState.logPrefix} Skipping filler: "${cleanTranscript}"`);
+                    AppState.isProcessing = false;
+                    if (window.resumeRecordingCallback) {
+                        console.log(`${AppState.logPrefix} Calling resume callback after filler words`);
+                        window.resumeRecordingCallback();
+                        window.resumeRecordingCallback = null;
+                    }
+                    return;
+                }
+                
+                // Update transcript display
+                transcriptText.textContent = transcript;
+                transcriptDiv.style.display = 'block';
+                
+                // Add user message to conversation log
+                addToConversationLog(transcript, "user");
+                
+                // Step 2: Send to Agent
+                statusElement.textContent = "Getting AI response...";
+                console.log(`${AppState.logPrefix} Sending transcript to Agent API`);
+                
+                const agentResponse = await fetch('/api/agent', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ transcript }),
+                    // Add timeout to prevent hanging requests
+                    signal: AbortSignal.timeout(30000) // 30 second timeout
+                });
+                
+                if (!agentResponse.ok) {
+                    throw new Error(`Agent server error: ${agentResponse.status}`);
+                }
+                
+                const agentData = await agentResponse.json();
+                if (!agentData.success) {
+                    throw new Error(agentData.error || 'Failed to process with agent');
+                }
+                
+                console.log(`${AppState.logPrefix} Received agent response`);
+                
+                // Add AI response to conversation log
+                addToConversationLog(agentData.response, "ai");
+                
+                // Step 3: Text to Speech
+                statusElement.textContent = "Converting response to speech...";
+                console.log(`${AppState.logPrefix} Sending response to TTS API`);
+                
+                const ttsResponse = await fetch('/api/tts', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ text: agentData.response }),
+                    // Add timeout to prevent hanging requests
+                    signal: AbortSignal.timeout(15000) // 15 second timeout
+                });
+                
+                if (!ttsResponse.ok) {
+                    throw new Error(`TTS server error: ${ttsResponse.status}`);
+                }
+                
+                console.log(`${AppState.logPrefix} Received TTS audio response`);
+                
+                // Play the audio response
+                const audioBlob = await ttsResponse.blob();
+                const audioUrl = URL.createObjectURL(audioBlob);
+                audioPlayer.src = audioUrl;
+                audioPlayer.style.display = 'block';
+                
+                audioPlayer.onended = () => {
+                    // Resume listening after audio finishes
+                    console.log(`${AppState.logPrefix} Audio playback ended, resuming listening`);
+                    audioPlayer.style.display = 'none';
+                    
+                    // Call the resume recording callback if available
+                    if (window.resumeRecordingCallback) {
+                        console.log(`${AppState.logPrefix} Calling resume callback after audio playback`);
+                        window.resumeRecordingCallback();
+                        window.resumeRecordingCallback = null;
+                    } else {
+                        // Fallback if callback is missing - restart recording directly
+                        console.log(`${AppState.logPrefix} No callback found - using fallback restart`);
+                        if (AppState.conversationActive) {
+                            setTimeout(startRecording, 500);
+                        }
+                    }
+                };
+                
+                audioPlayer.onerror = (e) => {
+                    console.error(`${AppState.logPrefix} Audio playback error:`, e);
+                    audioPlayer.style.display = 'none';
+                    statusElement.textContent = "Error playing response";
+                    
+                    // Still try to resume recording
+                    if (window.resumeRecordingCallback) {
+                        console.log(`${AppState.logPrefix} Calling resume callback after audio error`);
+                        window.resumeRecordingCallback();
+                        window.resumeRecordingCallback = null;
+                    }
+                };
+                
+                statusElement.textContent = "Playing response...";
+                
+                try {
+                    console.log(`${AppState.logPrefix} Starting audio playback`);
+                    const playPromise = audioPlayer.play();
+                    
+                    if (playPromise !== undefined) {
+                        playPromise.catch(error => {
+                            console.error(`${AppState.logPrefix} Playback failed:`, error);
+                            // If autoplay was prevented, try to recover
+                            if (window.resumeRecordingCallback) {
+                                console.log(`${AppState.logPrefix} Calling resume callback after playback failure`);
+                                window.resumeRecordingCallback();
+                                window.resumeRecordingCallback = null;
+                            }
+                        });
+                    }
+                } catch (playError) {
+                    console.error(`${AppState.logPrefix} Error during play():`, playError);
+                    if (window.resumeRecordingCallback) {
+                        console.log(`${AppState.logPrefix} Calling resume callback after play error`);
+                        window.resumeRecordingCallback();
+                        window.resumeRecordingCallback = null;
+                    }
+                }
+                
+            } catch (error) {
+                console.error(`${AppState.logPrefix} Error:`, error);
+                statusElement.textContent = 'Error: ' + error.message;
+                addToConversationLog("Sorry, I encountered an error: " + error.message, "ai");
+                
+                // Resume listening after error
+                setTimeout(() => {
+                    if (window.resumeRecordingCallback) {
+                        console.log(`${AppState.logPrefix} Calling resume callback after error recovery`);
+                        window.resumeRecordingCallback();
+                        window.resumeRecordingCallback = null;
+                    }
+                }, 2000);
+            } finally {
+                AppState.isProcessing = false;
+                AppState.pauseDetected = false;
+            }
+        }
+        
+        // Add message to conversation log
+        function addToConversationLog(message, sender) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = sender === 'user' ? 'user-message' : 'ai-message';
+            messageDiv.textContent = message;
+            conversationLog.appendChild(messageDiv);
+            
+            // Scroll to bottom
+            conversationLog.scrollTop = conversationLog.scrollHeight;
+        }
+        
+        // Initialize on load
+        window.addEventListener('load', () => {
+            initCanvas();
+            
+            // Set initial values from settings
+            silenceThresholdInput.value = settings.silenceThreshold;
+            pauseThresholdInput.value = settings.pauseThreshold;
+            echoCancelCheckbox.checked = settings.echoCancel;
+            noiseSuppressCheckbox.checked = settings.noiseSuppress;
+            if (continuousModeCheckbox) {
+                continuousModeCheckbox.checked = settings.continuousMode;
+            }
+            
+            // Make sure resumeRecordingCallback is defined
+            if (!window.resumeRecordingCallback) {
+                window.resumeRecordingCallback = null;
+            }
+            
+            console.log(`${AppState.logPrefix} Voice Assistant initialized`);
+        });
+        
+        // Handle window resize for canvas
+        window.addEventListener('resize', () => {
+            if (visualizerCanvas) {
+                initCanvas();
+            }
+        });
+    </script>
+</body>
+</html> 
