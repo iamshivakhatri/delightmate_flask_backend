@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -13,25 +14,29 @@
             color: #333;
             background-color: #f4f4f4;
         }
+
         .container {
-            max-width: 800px;
+            max-width: 1200px;
             margin: 0 auto;
             background: white;
             padding: 20px;
             border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         }
+
         h1 {
             text-align: center;
             color: #50b3a2;
             margin-bottom: 20px;
         }
+
         .controls {
             display: flex;
             flex-direction: column;
             align-items: center;
             margin: 20px 0;
         }
+
         button {
             background: #50b3a2;
             color: white;
@@ -45,26 +50,31 @@
             transition: all 0.3s ease;
             min-width: 200px;
         }
+
         button:hover {
             background: #3a9c8c;
             transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
+
         button:disabled {
             background: #cccccc;
             cursor: not-allowed;
             transform: none;
             box-shadow: none;
         }
+
         .manual-buttons {
             display: flex;
             margin-top: 10px;
         }
+
         .manual-buttons button {
             min-width: 130px;
             font-size: 14px;
             padding: 8px 16px;
         }
+
         .record-button {
             width: 80px;
             height: 80px;
@@ -76,33 +86,52 @@
             margin-bottom: 20px;
             cursor: pointer;
             transition: transform 0.2s ease;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
         }
+
         .record-button:hover {
             transform: scale(1.05);
         }
+
         .record-button.recording {
             animation: pulse 1.5s infinite;
         }
+
         @keyframes pulse {
-            0% { transform: scale(1); box-shadow: 0 4px 8px rgba(0,0,0,0.2); }
-            50% { transform: scale(1.05); box-shadow: 0 6px 12px rgba(255,82,82,0.3); }
-            100% { transform: scale(1); box-shadow: 0 4px 8px rgba(0,0,0,0.2); }
+            0% {
+                transform: scale(1);
+                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            }
+
+            50% {
+                transform: scale(1.05);
+                box-shadow: 0 6px 12px rgba(255, 82, 82, 0.3);
+            }
+
+            100% {
+                transform: scale(1);
+                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            }
         }
-        .transcript, .response {
+
+        .transcript,
+        .response {
             margin-top: 20px;
             padding: 15px;
             background: #f8f8f8;
             border-left: 4px solid #50b3a2;
             border-radius: 4px;
         }
+
         .response {
             border-left-color: #ff5252;
         }
+
         .audio-player {
             width: 100%;
             margin-top: 20px;
         }
+
         .status {
             text-align: center;
             font-style: italic;
@@ -110,6 +139,7 @@
             margin: 10px 0;
             font-weight: bold;
         }
+
         .volume-meter {
             width: 100%;
             height: 20px;
@@ -117,8 +147,9 @@
             border-radius: 10px;
             margin: 10px 0;
             overflow: hidden;
-            box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
         }
+
         .volume-level {
             height: 100%;
             width: 0%;
@@ -126,59 +157,422 @@
             transition: width 0.1s;
             border-radius: 10px;
         }
+
+        /* Updated layout styles for two-pane design */
+        .app-container {
+            display: flex;
+            width: 100%;
+            gap: 24px;
+            /* Increased gap between panes */
+            margin-top: 20px;
+            min-height: 500px;
+            /* Ensure minimum height for app-like feel */
+        }
+
+        .conversation-container {
+            flex: 0 0 50%;
+            /* Fixed at 50% width */
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            padding: 16px;
+            background: #f9f9f9;
+            border-radius: 12px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+        }
+
         .conversation-log {
-            margin-top: 30px;
-            max-height: 300px;
+            flex: 1;
+            margin-top: 0;
+            max-height: 500px;
             overflow-y: auto;
             border: 1px solid #eee;
             padding: 15px;
             border-radius: 8px;
-            background-color: #fafafa;
+            background-color: #ffffff;
         }
-        .user-message, .ai-message {
+
+        .user-message,
+        .ai-message {
             padding: 12px;
             margin: 8px 0;
             border-radius: 18px;
             position: relative;
             max-width: 80%;
             word-wrap: break-word;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+            animation: message-appear 0.3s ease-out;
         }
+
+        @keyframes message-appear {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
         .user-message {
             background-color: #e3f2fd;
             margin-left: auto;
             border-bottom-right-radius: 4px;
             color: #0d47a1;
         }
+
         .ai-message {
             background-color: #f1f1f1;
             margin-right: auto;
             border-bottom-left-radius: 4px;
             color: #333;
         }
-        .settings-panel {
+
+        .tool-sidebar {
+            flex: 0 0 50%;
+            /* Fixed at 50% width */
+            background: #f8f8f8;
+            border-radius: 12px;
+            border: 1px solid #eaeaea;
+            padding: 20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            max-height: 80vh;
+            overflow-y: auto;
+            transition: all 0.3s ease;
+            animation: slidein 0.3s ease-out;
+        }
+
+        @keyframes slidein {
+            from {
+                opacity: 0;
+                transform: translateX(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .tool-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .tool-header h3 {
+            margin: 0;
+            color: #50b3a2;
+            font-size: 1.4rem;
+        }
+
+        .close-button {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #666;
+            min-width: auto;
+            padding: 5px 10px;
+            margin: 0;
+            border-radius: 50%;
+            transition: background 0.2s;
+        }
+
+        .close-button:hover {
+            background: #f0f0f0;
+            color: #ff5252;
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* Email Tool Styles */
+        .email-form {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .email-field {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .email-field label {
+            font-weight: bold;
+            color: #555;
+            font-size: 0.9rem;
+        }
+
+        .email-field input,
+        .email-field textarea {
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-family: inherit;
+            transition: border 0.2s;
+        }
+
+        .email-field input:focus,
+        .email-field textarea:focus {
+            border-color: #50b3a2;
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(80, 179, 162, 0.1);
+        }
+
+        .email-field textarea {
+            min-height: 180px;
+            resize: vertical;
+        }
+
+        .tool-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
             margin-top: 20px;
+        }
+
+        .tool-button {
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+
+        .tool-button.primary {
+            background: #50b3a2;
+            color: white;
+            border: none;
+        }
+
+        .tool-button.primary:hover {
+            background: #3a9c8c;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(80, 179, 162, 0.2);
+        }
+
+        .tool-button.secondary {
+            background: #f5f5f5;
+            color: #333;
+            border: 1px solid #ddd;
+        }
+
+        .tool-button.secondary:hover {
+            background: #ebebeb;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        /* Calendar Tool Styles */
+        .calendar-view {
+            border: 1px solid #eaeaea;
+            border-radius: 12px;
+            padding: 20px;
+            background: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .calendar-day {
+            text-align: center;
             padding: 10px;
-            border: 1px solid #eee;
+            background: #f5f5f5;
             border-radius: 8px;
         }
+        
+        .calendar-event {
+            background: #e3f2fd;
+            border-left: 3px solid #1976d2;
+            padding: 12px;
+            margin: 10px 0;
+            border-radius: 8px;
+            transition: transform 0.2s;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        
+        .calendar-event:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+        }
+        
+        .free-time-header {
+            margin-top: 20px;
+            margin-bottom: 10px;
+            color: #4caf50;
+            border-bottom: 1px solid #e0e0e0;
+            padding-bottom: 5px;
+        }
+        
+        .free-time-slot {
+            background: #e8f5e9;
+            border-left: 3px solid #4caf50;
+            padding: 10px;
+            margin: 6px 0;
+            border-radius: 8px;
+            font-weight: 500;
+        }
+        
+        /* Calendar Add Form */
+        .calendar-add-form {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        
+        .calendar-add-form h4 {
+            margin-top: 0;
+            margin-bottom: 20px;
+            color: #50b3a2;
+            border-bottom: 1px solid #f0f0f0;
+            padding-bottom: 10px;
+        }
+        
+        .calendar-form-fields {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        /* Improved Email Tool Styles */
+        .email-form h4 {
+            margin-top: 0;
+            margin-bottom: 20px;
+            color: #50b3a2;
+            border-bottom: 1px solid #f0f0f0;
+            padding-bottom: 10px;
+        }
+        
+        .email-list h4 {
+            margin-top: 0;
+            margin-bottom: 20px;
+            color: #50b3a2;
+            border-bottom: 1px solid #f0f0f0;
+            padding-bottom: 10px;
+        }
+
+        /* Email List Tool Styles */
+        .email-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .email-item {
+            padding: 15px;
+            border: 1px solid #eee;
+            border-radius: 6px;
+            background: white;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .email-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .email-item-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .email-item-subject {
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #333;
+        }
+
+        .email-item-preview {
+            font-size: 0.9em;
+            color: #555;
+            line-height: 1.4;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .app-container {
+                flex-direction: column;
+            }
+
+            .conversation-container,
+            .tool-sidebar {
+                flex: 1 1 100%;
+                max-height: none;
+            }
+
+            .tool-sidebar {
+                margin-top: 20px;
+            }
+        }
+
+        .settings-panel {
+            margin-top: 20px;
+            padding: 15px;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            background-color: white;
+        }
+
         .settings-panel h3 {
             margin-top: 0;
             color: #50b3a2;
         }
+
         .settings-row {
             display: flex;
             align-items: center;
             margin-bottom: 10px;
         }
+
         .settings-row label {
             flex: 1;
         }
+
         .settings-row input {
             width: 100px;
-            padding: 5px;
+            padding: 8px;
             border: 1px solid #ccc;
             border-radius: 4px;
         }
+
         .settings-toggle {
             cursor: pointer;
             color: #50b3a2;
@@ -186,11 +580,13 @@
             margin-top: 10px;
             display: inline-block;
         }
+
         .debug-info {
             font-size: 12px;
             color: #666;
             margin-top: 5px;
         }
+
         .audio-visualizer {
             width: 100%;
             height: 60px;
@@ -200,20 +596,23 @@
             position: relative;
             overflow: hidden;
         }
+
         .visualizer-canvas {
             width: 100%;
             height: 100%;
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <h1>DelightMate Voice Assistant</h1>
-        
+
         <div class="controls">
             <div class="record-button" id="recordButton">
                 <svg width="30" height="30" viewBox="0 0 24 24" fill="white">
-                    <path d="M12,2A3,3 0 0,1 15,5V11A3,3 0 0,1 12,14A3,3 0 0,1 9,11V5A3,3 0 0,1 12,2M19,11C19,14.53 16.39,17.44 13,17.93V21H11V17.93C7.61,17.44 5,14.53 5,11H7A5,5 0 0,0 12,16A5,5 0 0,0 17,11H19Z" />
+                    <path
+                        d="M12,2A3,3 0 0,1 15,5V11A3,3 0 0,1 12,14A3,3 0 0,1 9,11V5A3,3 0 0,1 12,2M19,11C19,14.53 16.39,17.44 13,17.93V21H11V17.93C7.61,17.44 5,14.53 5,11H7A5,5 0 0,0 12,16A5,5 0 0,0 17,11H19Z" />
                 </svg>
             </div>
             <div>
@@ -225,16 +624,16 @@
                 <button id="toggleSettingsButton">Show Settings</button>
             </div>
             <div class="status" id="status">Ready to start conversation...</div>
-            
+
             <div class="audio-visualizer">
                 <canvas id="visualizerCanvas" class="visualizer-canvas"></canvas>
             </div>
-            
+
             <div class="volume-meter">
                 <div class="volume-level" id="volumeLevel"></div>
             </div>
         </div>
-        
+
         <div class="settings-panel" id="settingsPanel" style="display: none;">
             <h3>Settings</h3>
             <div class="settings-row">
@@ -259,17 +658,33 @@
             </div>
             <div class="debug-info" id="debugInfo"></div>
         </div>
-        
+
         <div class="transcript" id="transcript" style="display: none;">
             <h3>Current Message:</h3>
             <p id="transcriptText"></p>
         </div>
-        
-        <div class="conversation-log" id="conversationLog">
-            <!-- Conversation history will be added here -->
-            <div class="ai-message">Welcome! I'm your DelightMate assistant. Click "Start Conversation" to begin.</div>
+
+        <div class="app-container">
+            <div class="conversation-container">
+                <div class="conversation-log" id="conversationLog">
+                    <!-- Conversation history will be added here -->
+                    <div class="ai-message">Welcome! I'm your DelightMate assistant. Click "Start Conversation" to
+                        begin.</div>
+                </div>
+            </div>
+
+            <!-- Tool sidebar - will be shown when tools are activated -->
+            <div class="tool-sidebar" id="toolSidebar" style="display: none;">
+                <div class="tool-header">
+                    <h3 id="toolTitle">Tool Title</h3>
+                    <button id="closeTool" class="close-button">×</button>
+                </div>
+                <div class="tool-content" id="toolContent">
+                    <!-- Tool content will be dynamically generated -->
+                </div>
+            </div>
         </div>
-        
+
         <audio id="audioPlayer" class="audio-player" style="display: none;"></audio>
     </div>
 
@@ -294,7 +709,7 @@
         const debugInfo = document.getElementById('debugInfo');
         const visualizerCanvas = document.getElementById('visualizerCanvas');
         const canvasCtx = visualizerCanvas.getContext('2d');
-        
+
         // Create a dedicated state management object to centralize our application state
         // This will help us keep track of state across different function calls
         const AppState = {
@@ -305,7 +720,7 @@
             silenceStart: null,
             hasDetectedAudio: false,
             significantSpeechDetected: false,
-            
+
             // Audio resources
             mediaRecorder: null,
             audioChunks: [],
@@ -313,17 +728,21 @@
             audioContext: null,
             analyser: null,
             source: null,
-            
+
             // Timers and tracking
             continuousRecordingTimer: null,
             lastProcessedTime: 0,
-            
+
             // Conversation state
             conversationActive: false,
-            
+
+            // Tool state
+            activeTool: null, // Current active tool
+            pendingToolAction: null, // Action waiting for confirmation
+
             // Debug
             logPrefix: '🎙️ VoiceAssistant:',
-            
+
             // Methods for state management
             startConversation() {
                 this.conversationActive = true;
@@ -332,7 +751,7 @@
                 manualPauseButton.disabled = false;
                 console.log(`${this.logPrefix} Conversation started`);
             },
-            
+
             endConversation() {
                 this.conversationActive = false;
                 startButton.disabled = false;
@@ -341,7 +760,7 @@
                 this.resetAudioState();
                 console.log(`${this.logPrefix} Conversation ended`);
             },
-            
+
             resetAudioState() {
                 this.isRecording = false;
                 this.isProcessing = false;
@@ -352,14 +771,26 @@
                 this.audioChunks = [];
                 console.log(`${this.logPrefix} Audio state reset`);
             },
-            
+
+            activateTool(toolName) {
+                this.activeTool = toolName;
+                console.log(`${this.logPrefix} Tool activated: ${toolName}`);
+            },
+
+            deactivateTool() {
+                this.activeTool = null;
+                this.pendingToolAction = null;
+                console.log(`${this.logPrefix} Tool deactivated`);
+            },
+
             debug() {
                 console.log(`${this.logPrefix} State: 
                     Recording: ${this.isRecording},
                     Processing: ${this.isProcessing}, 
                     Conversation: ${this.conversationActive},
                     startButton.disabled: ${startButton.disabled},
-                    stopButton.disabled: ${stopButton.disabled}
+                    stopButton.disabled: ${stopButton.disabled},
+                    ActiveTool: ${this.activeTool}
                 `);
             }
         };
@@ -367,7 +798,7 @@
         // Audio processing variables - using AppState now for most of these
         let volumeData = [];
         let pauseTimeout = null;
-        
+
         // Settings with default values
         let settings = {
             silenceThreshold: 15,
@@ -378,67 +809,67 @@
             minAudioSize: 10000, // Minimum audio size to consider as valid speech (bytes)
             significantAudioThreshold: 25 // Threshold for significant audio (higher than silence threshold)
         };
-        
+
         // Draw visualizer animation
         function drawVisualizer() {
             if (!AppState.analyser || !AppState.isRecording) {
                 return;
             }
-            
+
             const WIDTH = visualizerCanvas.width;
             const HEIGHT = visualizerCanvas.height;
-            
+
             requestAnimationFrame(drawVisualizer);
-            
+
             const bufferLength = AppState.analyser.frequencyBinCount;
             const dataArray = new Uint8Array(bufferLength);
             AppState.analyser.getByteFrequencyData(dataArray);
-            
+
             canvasCtx.fillStyle = 'rgb(20, 20, 20)';
             canvasCtx.fillRect(0, 0, WIDTH, HEIGHT);
-            
+
             const barWidth = (WIDTH / bufferLength) * 2.5;
             let barHeight;
             let x = 0;
-            
+
             for (let i = 0; i < bufferLength; i++) {
                 barHeight = dataArray[i] / 2;
-                
+
                 // Calculate color based on frequency
                 const r = 80 + (dataArray[i] / 255 * 175);
                 const g = 179 - (dataArray[i] / 255 * 40);
                 const b = 162 - (dataArray[i] / 255 * 40);
-                
+
                 canvasCtx.fillStyle = `rgb(${r}, ${g}, ${b})`;
                 canvasCtx.fillRect(x, HEIGHT - barHeight, barWidth, barHeight);
-                
+
                 x += barWidth + 1;
             }
         }
-        
+
         // Initialize canvas
         function initCanvas() {
             visualizerCanvas.width = visualizerCanvas.clientWidth;
             visualizerCanvas.height = visualizerCanvas.clientHeight;
             canvasCtx.clearRect(0, 0, visualizerCanvas.width, visualizerCanvas.height);
         }
-        
+
         // Settings controls
         toggleSettingsButton.addEventListener('click', () => {
             settingsPanel.style.display = settingsPanel.style.display === 'none' ? 'block' : 'none';
             toggleSettingsButton.textContent = settingsPanel.style.display === 'none' ? 'Show Settings' : 'Hide Settings';
         });
-        
+
         // Update settings when inputs change
-        silenceThresholdInput.addEventListener('change', function() {
+        silenceThresholdInput.addEventListener('change', function () {
             settings.silenceThreshold = parseFloat(this.value);
         });
-        
-        pauseThresholdInput.addEventListener('change', function() {
+
+        pauseThresholdInput.addEventListener('change', function () {
             settings.pauseThreshold = parseFloat(this.value);
         });
-        
-        echoCancelCheckbox.addEventListener('change', function() {
+
+        echoCancelCheckbox.addEventListener('change', function () {
             settings.echoCancel = this.checked;
             if (AppState.isRecording) {
                 // Need to restart recording to apply this setting
@@ -446,8 +877,8 @@
                 setTimeout(startRecording, 500);
             }
         });
-        
-        noiseSuppressCheckbox.addEventListener('change', function() {
+
+        noiseSuppressCheckbox.addEventListener('change', function () {
             settings.noiseSuppress = this.checked;
             if (AppState.isRecording) {
                 // Need to restart recording to apply this setting
@@ -455,19 +886,19 @@
                 setTimeout(startRecording, 500);
             }
         });
-        
+
         // Add event listener for continuous mode checkbox
         const continuousModeCheckbox = document.getElementById('continuousMode');
-        continuousModeCheckbox.addEventListener('change', function() {
+        continuousModeCheckbox.addEventListener('change', function () {
             settings.continuousMode = this.checked;
         });
-        
+
         // Start/stop controls
         startButton.addEventListener('click', startConversation);
         stopButton.addEventListener('click', endConversation);
         recordButton.addEventListener('click', toggleRecording);
         manualPauseButton.addEventListener('click', pauseAndProcess);
-        
+
         // Initialize AudioContext (for volume analysis)
         function initAudioContext() {
             try {
@@ -475,75 +906,75 @@
                 if (AppState.audioContext) {
                     AppState.audioContext.close();
                 }
-                
+
                 window.AudioContext = window.AudioContext || window.webkitAudioContext;
                 AppState.audioContext = new AudioContext();
                 AppState.analyser = AppState.audioContext.createAnalyser();
                 AppState.analyser.fftSize = 256;
-                
+
                 // Initialize canvas when audio context is created
                 initCanvas();
-                
+
                 console.log(`${AppState.logPrefix} Audio context initialized successfully`);
             } catch (e) {
                 console.error(`${AppState.logPrefix} AudioContext not supported or error initializing:`, e);
                 statusElement.textContent = "Audio features not supported in your browser";
             }
         }
-        
+
         // Start the conversation session
         function startConversation() {
             // Update state
             AppState.startConversation();
-            
+
             // Initialize audio components
             initAudioContext();
             statusElement.textContent = "Starting microphone...";
-            
+
             // Load settings from inputs
             settings.silenceThreshold = parseFloat(silenceThresholdInput.value);
             settings.pauseThreshold = parseFloat(pauseThresholdInput.value);
             settings.echoCancel = echoCancelCheckbox.checked;
             settings.noiseSuppress = noiseSuppressCheckbox.checked;
-            
+
             // Begin recording
             startRecording();
         }
-        
+
         // End the conversation session
         function endConversation() {
             console.log(`${AppState.logPrefix} Ending conversation`);
-            
+
             // Stop current recording if active
             if (AppState.isRecording) {
                 stopRecording();
             }
-            
+
             // Clear any pending timers
             if (pauseTimeout) {
                 clearTimeout(pauseTimeout);
                 pauseTimeout = null;
             }
-            
+
             // Clear continuous recording timer
             if (AppState.continuousRecordingTimer) {
                 clearInterval(AppState.continuousRecordingTimer);
                 AppState.continuousRecordingTimer = null;
             }
-            
+
             // Update application state
             AppState.endConversation();
-            
+
             // Update UI
             statusElement.textContent = "Conversation ended";
             addToConversationLog("Thanks for chatting with me!", "ai");
-            
+
             // Clear audio visualizer
             if (canvasCtx) {
                 canvasCtx.clearRect(0, 0, visualizerCanvas.width, visualizerCanvas.height);
             }
         }
-        
+
         // Toggle recording on/off
         function toggleRecording() {
             if (AppState.isRecording) {
@@ -552,17 +983,17 @@
                 startConversation();
             }
         }
-        
+
         // Start recording audio
         async function startRecording() {
             if (AppState.isRecording) {
                 console.log(`${AppState.logPrefix} Already recording, not starting again`);
                 return;
             }
-            
+
             console.log(`${AppState.logPrefix} Starting recording...`);
             AppState.debug();
-            
+
             // Reset state variables
             AppState.isRecording = true;
             AppState.pauseDetected = false;
@@ -570,55 +1001,55 @@
             AppState.hasDetectedAudio = false;
             AppState.significantSpeechDetected = false;
             AppState.audioChunks = [];
-            
+
             try {
                 // Make sure audio context is initialized
                 if (!AppState.audioContext || !AppState.analyser) {
                     console.log(`${AppState.logPrefix} Re-initializing audio context`);
                     initAudioContext();
                 }
-                
+
                 // Create constraints with echo cancellation and noise suppression
-                const constraints = { 
+                const constraints = {
                     audio: {
                         echoCancellation: settings.echoCancel,
                         noiseSuppression: settings.noiseSuppress,
                         autoGainControl: true
                     }
                 };
-                
+
                 statusElement.textContent = "Accessing microphone...";
                 const stream = await navigator.mediaDevices.getUserMedia(constraints);
-                
+
                 // Start media recorder with higher bitrate for better quality
                 const options = { mimeType: 'audio/webm;codecs=opus', audioBitsPerSecond: 128000 };
                 AppState.mediaRecorder = new MediaRecorder(stream, options);
-                
+
                 // Set up audio analysis for pause detection
                 if (AppState.audioContext && AppState.analyser) {
                     // Disconnect previous source if exists
                     if (AppState.source) {
                         AppState.source.disconnect();
                     }
-                    
+
                     AppState.source = AppState.audioContext.createMediaStreamSource(stream);
                     AppState.source.connect(AppState.analyser);
-                    
+
                     // Start monitoring volume
                     monitorVolume();
-                    
+
                     // Start visualizer
                     drawVisualizer();
                 } else {
                     throw new Error("Audio context or analyser not initialized");
                 }
-                
+
                 AppState.mediaRecorder.addEventListener('dataavailable', event => {
                     if (event.data.size > 0) {
                         AppState.audioChunks.push(event.data);
                     }
                 });
-                
+
                 AppState.mediaRecorder.addEventListener('stop', () => {
                     console.log(`${AppState.logPrefix} MediaRecorder stopped, chunks: ${AppState.audioChunks.length}`);
                     if (AppState.audioChunks.length > 0) {
@@ -629,30 +1060,30 @@
                         }
                     }
                 });
-                
+
                 AppState.mediaRecorder.start(100); // Collect data in 100ms chunks
                 recordButton.classList.add('recording');
                 statusElement.textContent = "Listening...";
-                
+
                 // Enable manual pause
                 manualPauseButton.disabled = false;
-                
+
                 // Start continuous recording timer if enabled
                 if (settings.continuousMode) {
                     startContinuousRecordingTimer();
                 }
-                
+
             } catch (error) {
                 console.error(`${AppState.logPrefix} Error starting recording:`, error);
                 statusElement.textContent = "Error starting recording: " + error.message;
-                
+
                 // Reset state on error
                 AppState.isRecording = false;
                 startButton.disabled = false;
                 stopButton.disabled = true;
             }
         }
-        
+
         // New function to handle continuous recording
         function startContinuousRecordingTimer() {
             // Clear any existing timer
@@ -660,38 +1091,38 @@
                 clearInterval(AppState.continuousRecordingTimer);
                 AppState.continuousRecordingTimer = null;
             }
-            
+
             // We don't need the interval timer anymore - we'll use the silence detection pattern instead
             // The system will now continuously listen until manually stopped
             console.log(`${AppState.logPrefix} Continuous listening mode active - will process on speech followed by silence`);
         }
-        
+
         // Stop recording
         function stopRecording() {
             console.log(`${AppState.logPrefix} Stopping recording`);
-            
+
             // Only stop if we have an active recorder
             if (AppState.mediaRecorder && AppState.mediaRecorder.state !== 'inactive') {
                 AppState.mediaRecorder.stop();
                 AppState.mediaRecorder.stream.getTracks().forEach(track => track.stop());
             }
-            
+
             AppState.isRecording = false;
             recordButton.classList.remove('recording');
             manualPauseButton.disabled = true;
-            
+
             // Clear continuous recording timer
             if (AppState.continuousRecordingTimer) {
                 clearInterval(AppState.continuousRecordingTimer);
                 AppState.continuousRecordingTimer = null;
             }
-            
+
             // Clear visualizer
             if (canvasCtx) {
                 canvasCtx.clearRect(0, 0, visualizerCanvas.width, visualizerCanvas.height);
             }
         }
-        
+
         // Monitor volume and detect silence
         function monitorVolume() {
             if (!AppState.analyser || !AppState.isRecording) {
@@ -709,11 +1140,11 @@
                 sum += volumeData[i];
             }
             const avg = sum / bufferLength;
-            
+
             // Update volume meter
             const volumePercent = Math.min(100, Math.max(0, avg * 2));
             volumeLevel.style.width = volumePercent + '%';
-            
+
             // Change color based on volume
             if (volumePercent > 70) {
                 volumeLevel.style.backgroundColor = '#ff4444'; // Red for loud
@@ -722,7 +1153,7 @@
             } else {
                 volumeLevel.style.backgroundColor = '#4444ff'; // Blue for quiet
             }
-            
+
             // Check if we've detected significant speech (using a higher threshold)
             if (avg > settings.significantAudioThreshold) {
                 if (!AppState.significantSpeechDetected) {
@@ -731,18 +1162,18 @@
                 AppState.significantSpeechDetected = true;
                 // Reset silence start when speech is detected
                 AppState.silenceStart = null;
-                
+
                 // Only log occasionally to reduce console spam
                 if (Math.random() < 0.02) {
                     console.log(`${AppState.logPrefix} Detected speech: ${avg.toFixed(2)}`);
                 }
             }
-            
+
             // Regular audio detection for visualization
             if (avg > settings.silenceThreshold) {
                 AppState.hasDetectedAudio = true;
             }
-            
+
             // Silence detection logic - only trigger processing if we had significant speech followed by silence
             if (AppState.significantSpeechDetected) {
                 if (avg < settings.silenceThreshold) {
@@ -751,15 +1182,15 @@
                         AppState.silenceStart = Date.now();
                         console.log(`${AppState.logPrefix} Silence started after speech`);
                     }
-                    
+
                     // Check if silence has lasted long enough to be a pause
                     const silenceDuration = (Date.now() - AppState.silenceStart) / 1000;
-                    
+
                     // Update debug status more frequently during silence
                     if (Math.random() < 0.1) {
                         console.log(`${AppState.logPrefix} Silence duration: ${silenceDuration.toFixed(1)}s`);
                     }
-                    
+
                     // Only process when:
                     // 1. We've detected significant speech
                     // 2. Followed by silence for the pause threshold duration
@@ -767,7 +1198,7 @@
                     // 4. Enough time has passed since last processing
                     if (silenceDuration > settings.pauseThreshold && !AppState.pauseDetected && !AppState.isProcessing &&
                         (Date.now() - AppState.lastProcessedTime > 3000)) {
-                        
+
                         console.log(`${AppState.logPrefix} Processing after ${silenceDuration.toFixed(1)}s of silence following speech`);
                         AppState.pauseDetected = true;
                         pauseAndProcess();
@@ -780,12 +1211,12 @@
                     AppState.silenceStart = null;
                 }
             }
-            
+
             // Add debug info
             if (debugInfo) {
-                debugInfo.textContent = `Vol: ${avg.toFixed(1)}, Speech: ${AppState.significantSpeechDetected}, Silence: ${AppState.silenceStart ? ((Date.now() - AppState.silenceStart)/1000).toFixed(1) + 's' : 'No'}, Active: ${AppState.conversationActive}`;
+                debugInfo.textContent = `Vol: ${avg.toFixed(1)}, Speech: ${AppState.significantSpeechDetected}, Silence: ${AppState.silenceStart ? ((Date.now() - AppState.silenceStart) / 1000).toFixed(1) + 's' : 'No'}, Active: ${AppState.conversationActive}`;
             }
-            
+
             // Continue monitoring as long as we're recording
             if (AppState.isRecording) {
                 requestAnimationFrame(monitorVolume);
@@ -793,40 +1224,40 @@
                 console.log(`${AppState.logPrefix} Volume monitoring stopped - recording ended`);
             }
         }
-        
+
         // Pause recording and process current audio
         function pauseAndProcess() {
             console.log(`${AppState.logPrefix} Pausing to process audio`);
-            
+
             if (!AppState.isRecording || AppState.isProcessing) {
                 console.log(`${AppState.logPrefix} Cannot pause - not recording or already processing`);
                 return;
             }
-            
+
             // Stop the current recorder to get the data
             const currentMediaRecorder = AppState.mediaRecorder;
             currentMediaRecorder.stop();
-            
+
             statusElement.textContent = "Processing your message...";
             transcriptDiv.style.display = 'none';
-            
+
             // Update state
             AppState.isRecording = false;
-            
+
             // Store the callback on the window object so it can be accessed from anywhere
             window.resumeRecordingCallback = resumeRecording;
         }
-        
+
         // resumeRecording function - improved to fix visualization and silence detection
         const resumeRecording = async () => {
             console.log(`${AppState.logPrefix} Resuming recording callback triggered`);
             console.log(`${AppState.logPrefix} Conversation active: ${AppState.conversationActive}, startButton.disabled: ${startButton.disabled}`);
-            
+
             // Important: Use AppState.conversationActive to determine if we should resume
             // Don't rely on button state which can be out of sync
             if (AppState.conversationActive) {
                 console.log(`${AppState.logPrefix} Resuming recording - conversation is active`);
-                
+
                 try {
                     // Reset AppState for a fresh start with the new recording session
                     AppState.isRecording = false;
@@ -835,37 +1266,37 @@
                     AppState.pauseDetected = false;
                     AppState.silenceStart = null;
                     AppState.audioChunks = [];
-                    
+
                     // CRITICAL FIX: Instead of trying to reuse the old stream,
                     // request a fresh microphone stream each time
-                    const constraints = { 
+                    const constraints = {
                         audio: {
                             echoCancellation: settings.echoCancel,
                             noiseSuppression: settings.noiseSuppress,
                             autoGainControl: true
                         }
                     };
-                    
+
                     console.log(`${AppState.logPrefix} Requesting fresh microphone stream`);
                     const stream = await navigator.mediaDevices.getUserMedia(constraints);
-                    
+
                     // Reinitialize the audio context if needed
                     if (!AppState.audioContext || !AppState.analyser) {
                         console.log(`${AppState.logPrefix} Reinitializing audio context`);
                         initAudioContext();
                     }
-                    
+
                     // Start a new recorder with the fresh stream
                     const options = { mimeType: 'audio/webm;codecs=opus', audioBitsPerSecond: 128000 };
                     AppState.mediaRecorder = new MediaRecorder(stream, options);
-                    
+
                     // Set up event handlers again
                     AppState.mediaRecorder.addEventListener('dataavailable', event => {
                         if (event.data.size > 0) {
                             AppState.audioChunks.push(event.data);
                         }
                     });
-                    
+
                     AppState.mediaRecorder.addEventListener('stop', () => {
                         if (AppState.audioChunks.length > 0) {
                             AppState.audioBlob = new Blob(AppState.audioChunks, { type: 'audio/webm;codecs=opus' });
@@ -874,21 +1305,21 @@
                             }
                         }
                     });
-                    
+
                     // Set up audio analysis again with the fresh stream
                     if (AppState.audioContext && AppState.analyser) {
                         // Disconnect previous source if exists
                         if (AppState.source) {
                             AppState.source.disconnect();
                         }
-                        
+
                         AppState.source = AppState.audioContext.createMediaStreamSource(stream);
                         AppState.source.connect(AppState.analyser);
-                        
+
                         // Start recording first, then visualization
                         AppState.mediaRecorder.start(100);
                         AppState.isRecording = true;
-                        
+
                         // Start monitoring volume with the fresh stream
                         // Using setTimeout to ensure the recorder is fully started
                         setTimeout(() => {
@@ -899,19 +1330,19 @@
                     } else {
                         throw new Error("Audio context or analyser not properly initialized");
                     }
-                    
+
                     recordButton.classList.add('recording');
                     statusElement.textContent = "Listening...";
-                    
+
                     console.log(`${AppState.logPrefix} Successfully restarted recording with fresh stream`);
-                    
+
                     // Debug state
                     AppState.debug();
-                    
+
                 } catch (error) {
                     console.error(`${AppState.logPrefix} Error resuming recording:`, error);
                     statusElement.textContent = "Error resuming: " + error.message;
-                    
+
                     // Try to fully restart recording as fallback
                     console.log(`${AppState.logPrefix} Falling back to complete restart`);
                     setTimeout(startRecording, 1000);
@@ -920,239 +1351,964 @@
                 console.log(`${AppState.logPrefix} Not resuming recording - conversation has ended`);
             }
         };
-        
-        // Process recorded audio
+
+        // ===================================
+        // TOOL DETECTION AND HANDLING SYSTEM
+        // ===================================
+
+        // Tool detection system - analyzes transcript to identify tool intents
+        function detectToolIntent(transcript) {
+            const text = transcript.toLowerCase();
+            console.log(`${AppState.logPrefix} Analyzing intent for: "${text}"`);
+
+            // Email writing/sending detection
+            if (text.includes("write an email") ||
+                text.includes("send an email") ||
+                text.includes("compose an email") ||
+                ((text.includes("email") || text.includes("mail")) &&
+                    (text.includes("to ") || text.includes("write") || text.includes("send") || text.includes("compose")))) {
+
+                // Try to extract recipient
+                let recipient = "recipient";
+                let subject = "Meeting Follow-up";
+
+                // Extract recipient with various patterns
+                const recipientPatterns = [
+                    /(?:email|mail|send|write)\s+to\s+([a-z0-9\s]+)(?:about|with|saying|regarding)?/i,
+                    /(?:email|mail|send|write)\s+([a-z0-9\s]+)(?:\s+an email|\s+a message)?/i,
+                    /(?:compose|create|draft)(?:\s+an email|\s+a message)?\s+(?:to|for)\s+([a-z0-9\s]+)/i
+                ];
+
+                for (const pattern of recipientPatterns) {
+                    const match = text.match(pattern);
+                    if (match && match[1]) {
+                        recipient = match[1].trim();
+                        break;
+                    }
+                }
+
+                // Extract subject if mentioned
+                const subjectMatch = text.match(/about\s+["']?([^"']+)["']?/i) ||
+                    text.match(/(?:with|regarding)\s+(?:the\s+)?(?:subject|title)\s+["']?([^"']+)["']?/i);
+
+                if (subjectMatch && subjectMatch[1]) {
+                    subject = subjectMatch[1].trim();
+                }
+
+                console.log(`${AppState.logPrefix} Detected email intent with recipient: ${recipient}, subject: ${subject}`);
+
+                return {
+                    tool: "email",
+                    action: "compose",
+                    params: { recipient, subject }
+                };
+            }
+
+            // Email summary detection
+            if ((text.includes("summarize") || text.includes("summary") || text.includes("check")) &&
+                (text.includes("email") || text.includes("inbox") || text.includes("messages"))) {
+
+                // Try to extract count
+                let count = 3; // Default
+                const countMatch = text.match(/(\d+)\s+(?:emails|messages|recent)/i) ||
+                    text.match(/(?:emails|messages|recent)\s+(\d+)/i);
+
+                if (countMatch && countMatch[1]) {
+                    count = parseInt(countMatch[1], 10);
+                }
+
+                console.log(`${AppState.logPrefix} Detected email summary intent for ${count} emails`);
+
+                return {
+                    tool: "email",
+                    action: "summarize",
+                    params: { count }
+                };
+            }
+
+            // Calendar check detection
+            if (text.includes("calendar") &&
+                (text.includes("check") || text.includes("look") || text.includes("view") ||
+                    text.includes("availability") || text.includes("free") || text.includes("busy") ||
+                    text.includes("schedule") || text.includes("appointments") ||
+                    text.includes("when am i"))) {
+
+                // Try to extract date
+                let date = "today";
+                const datePatterns = [
+                    /(?:calendar|schedule|availability)(?:\s+for|\s+on)?\s+([a-z0-9\s,]+)/i,
+                    /(?:free|busy|available)(?:\s+on|\s+during)?\s+([a-z0-9\s,]+)/i,
+                    /what(?:'s|\s+is)(?:\s+my)?\s+(?:schedule|calendar)(?:\s+for|\s+on)?\s+([a-z0-9\s,]+)/i
+                ];
+
+                for (const pattern of datePatterns) {
+                    const match = text.match(pattern);
+                    if (match && match[1]) {
+                        date = match[1].trim();
+                        break;
+                    }
+                }
+
+                console.log(`${AppState.logPrefix} Detected calendar check intent for date: ${date}`);
+
+                return {
+                    tool: "calendar",
+                    action: "check",
+                    params: { date }
+                };
+            }
+
+            // Calendar add event detection
+            if ((text.includes("add") || text.includes("create") || text.includes("schedule") || text.includes("set up")) &&
+                (text.includes("event") || text.includes("meeting") || text.includes("appointment") || text.includes("reminder")) &&
+                (text.includes("calendar") || text.includes("schedule"))) {
+
+                // Extract event details
+                let title = "New Event";
+                let date = "today";
+                let time = "12:00";
+
+                // Extract title
+                const titlePatterns = [
+                    /(?:add|create|schedule|set up)(?:\s+a|\s+an)?\s+(?:event|meeting|appointment|reminder)(?:\s+called|\s+titled|\s+named)?\s+["']?([^"']+)["']?/i,
+                    /(?:add|create|schedule|set up)(?:\s+a|\s+an)?\s+["']?([^"']+)["']?(?:\s+event|\s+meeting|\s+appointment|\s+reminder)/i
+                ];
+
+                for (const pattern of titlePatterns) {
+                    const match = text.match(pattern);
+                    if (match && match[1]) {
+                        title = match[1].trim();
+                        break;
+                    }
+                }
+
+                // Extract date and time
+                const dateTimePatterns = [
+                    /(?:on|for)\s+([a-z0-9\s,]+)(?:\s+at)?\s+(?:at\s+)?(\d{1,2}(?::\d{2})?\s*(?:am|pm)?)/i,
+                    /(?:at|on)\s+(\d{1,2}(?::\d{2})?\s*(?:am|pm)?)(?:\s+on)?\s+([a-z0-9\s,]+)/i
+                ];
+
+                for (const pattern of dateTimePatterns) {
+                    const match = text.match(pattern);
+                    if (match) {
+                        if (match[1] && match[2]) {
+                            // Check which is date and which is time
+                            if (match[1].match(/\d{1,2}(?::\d{2})?\s*(?:am|pm)?/i)) {
+                                time = match[1].trim();
+                                date = match[2].trim();
+                            } else {
+                                date = match[1].trim();
+                                time = match[2].trim();
+                            }
+                            break;
+                        }
+                    }
+                }
+
+                console.log(`${AppState.logPrefix} Detected calendar add intent - Title: ${title}, Date: ${date}, Time: ${time}`);
+
+                return {
+                    tool: "calendar",
+                    action: "add",
+                    params: { title, date, time }
+                };
+            }
+
+            // No tool intent detected
+            console.log(`${AppState.logPrefix} No tool intent detected, treating as conversation`);
+            return null;
+        }
+
+        // Handle tool activation based on detected intent
+        async function handleToolIntent(toolIntent, transcript) {
+            console.log(`${AppState.logPrefix} Handling tool intent:`, toolIntent);
+
+            if (!toolIntent) return false;
+
+            try {
+                switch (toolIntent.tool) {
+                    case "email":
+                        if (toolIntent.action === "compose") {
+                            await handleEmailCompose(toolIntent.params, transcript);
+                            return true;
+                        } else if (toolIntent.action === "summarize") {
+                            await handleEmailSummarize(toolIntent.params, transcript);
+                            return true;
+                        }
+                        break;
+
+                    case "calendar":
+                        if (toolIntent.action === "check") {
+                            await handleCalendarCheck(toolIntent.params, transcript);
+                            return true;
+                        } else if (toolIntent.action === "add") {
+                            await handleCalendarAdd(toolIntent.params, transcript);
+                            return true;
+                        }
+                        break;
+                }
+
+                return false;
+            } catch (error) {
+                console.error(`${AppState.logPrefix} Error handling tool intent:`, error);
+                await processAIResponse(`I'm sorry, I encountered an error while trying to ${toolIntent.action} ${toolIntent.tool}. Please try again.`);
+                return true; // Return true to prevent normal conversation flow
+            }
+        }
+
+        // Process user confirmation for pending actions
+        async function processToolConfirmation(transcript) {
+            if (!AppState.pendingToolAction) {
+                return false;
+            }
+
+            const affirmativeResponses = ['yes', 'yeah', 'sure', 'okay', 'ok', 'yep', 'correct', 'confirm', 'do it', 'please do', 'send it', 'that\'s right', 'sounds good', 'go ahead', 'definitely'];
+            const negativeResponses = ['no', 'nope', 'cancel', 'don\'t', 'stop', 'wait', 'hold on', 'incorrect', 'that\'s wrong', 'nevermind', 'forget it', 'don\'t do that'];
+
+            const cleanTranscript = transcript.toLowerCase().trim();
+
+            // Check if the response is affirmative
+            if (affirmativeResponses.some(response => cleanTranscript.includes(response))) {
+                console.log(`${AppState.logPrefix} Detected affirmative response: "${cleanTranscript}"`);
+                await executeToolAction(AppState.pendingToolAction, true);
+                AppState.pendingToolAction = null;
+                return true;
+            }
+
+            // Check if the response is negative
+            if (negativeResponses.some(response => cleanTranscript.includes(response))) {
+                console.log(`${AppState.logPrefix} Detected negative response: "${cleanTranscript}"`);
+                await processAIResponse("I've canceled that action. Is there anything else you'd like me to do?");
+                hideTool();
+                AppState.pendingToolAction = null;
+                return true;
+            }
+
+            // If the response doesn't match confirmation patterns, return false
+            return false;
+        }
+
+        // Execute the confirmed tool action
+        async function executeToolAction(toolAction, isConfirmed) {
+            if (!isConfirmed || !toolAction) {
+                return;
+            }
+
+            console.log(`${AppState.logPrefix} Executing tool action:`, toolAction);
+
+            try {
+                switch (toolAction.tool) {
+                    case "email":
+                        if (toolAction.action === "send") {
+                            // Brief status update only
+                            statusElement.textContent = "Sending email...";
+
+                            // Simulate a brief waiting period
+                            await new Promise(resolve => setTimeout(resolve, 1500));
+
+                            // Concise confirmation
+                            await processAIResponse(`Email sent to ${toolAction.params.to}.`);
+                            hideTool();
+
+                            // Deactivate the tool
+                            AppState.deactivateTool();
+                        }
+                        break;
+
+                    case "calendar":
+                        if (toolAction.action === "create") {
+                            const title = toolAction.params.title;
+                            const date = toolAction.params.date;
+
+                            // Update the status text only (no TTS)
+                            statusElement.textContent = "Creating calendar event...";
+
+                            // Simulate a brief waiting period
+                            await new Promise(resolve => setTimeout(resolve, 1500));
+
+                            // Concise confirmation with TTS
+                            await processAIResponse(`Event "${title}" added to calendar.`);
+                            hideTool();
+
+                            // Deactivate the tool
+                            AppState.deactivateTool();
+                        }
+                        break;
+                }
+            } catch (error) {
+                console.error(`${AppState.logPrefix} Error executing tool action:`, error);
+                await processAIResponse("Action failed. Please try again.");
+                hideTool();
+
+                // Make sure to deactivate the tool on error
+                AppState.deactivateTool();
+            }
+        }
+
+        // Email Tool Handlers
+        async function handleEmailCompose(params, transcript) {
+            try {
+                console.log(`${AppState.logPrefix} Handling email compose tool`);
+                // Set the active tool
+                AppState.activateTool("email");
+                
+                // Brief verbal acknowledgment
+                await processAIResponse(`Creating an email to ${params.recipient}.`);
+                
+                // Determine recipient email format
+                let recipientName = params.recipient || "Recipient";
+                let recipientEmail = `${recipientName.toLowerCase().replace(/\s+/g, '.')}@example.com`;
+                
+                // Generate a basic email template
+                const emailContent = `
+                    <div class="email-form">
+                        <h4>Compose New Email</h4>
+                        <div class="email-field">
+                            <label for="email-to">To:</label>
+                            <input type="text" id="email-to" value="${recipientEmail}">
+                        </div>
+                        <div class="email-field">
+                            <label for="email-subject">Subject:</label>
+                            <input type="text" id="email-subject" value="${params.subject || 'Meeting Follow-up'}">
+                        </div>
+                        <div class="email-field">
+                            <label for="email-body">Message:</label>
+                            <textarea id="email-body">Hello ${recipientName},
+
+I hope this email finds you well. I wanted to follow up on our recent conversation about the project.
+
+Let me know if you have any questions.
+
+Best regards,
+[Your Name]</textarea>
+                        </div>
+                        <div class="tool-buttons">
+                            <button class="tool-button secondary" id="email-cancel">Cancel</button>
+                            <button class="tool-button primary" id="email-send">Send Email</button>
+                        </div>
+                    </div>
+                `;
+                
+                // Show the tool with the email content
+                showTool("Compose Email");
+                document.getElementById('toolContent').innerHTML = emailContent;
+                
+                // Add event listeners
+                document.getElementById('email-send').addEventListener('click', async () => {
+                    // Get updated values from the form
+                    const to = document.getElementById('email-to').value;
+                    const subject = document.getElementById('email-subject').value;
+                    const body = document.getElementById('email-body').value;
+                    
+                    AppState.pendingToolAction = {
+                        tool: "email",
+                        action: "send",
+                        params: { to, subject, body }
+                    };
+                    
+                    // Brief confirmation request
+                    await processAIResponse(`Send email to ${to}?`);
+                });
+                
+                document.getElementById('email-cancel').addEventListener('click', async () => {
+                    hideTool();
+                    await processAIResponse("Email draft canceled.");
+                    // Deactivate the tool when canceled
+                    AppState.deactivateTool();
+                });
+                
+            } catch (error) {
+                console.error(`${AppState.logPrefix} Error in handleEmailCompose:`, error);
+                await processAIResponse("Couldn't create email. Please try again.");
+                
+                // Make sure to hide the tool if there's an error
+                try {
+                    hideTool();
+                } catch (e) {
+                    console.error(`${AppState.logPrefix} Error hiding tool:`, e);
+                }
+                
+                // Deactivate the tool on error
+                AppState.deactivateTool();
+            }
+        }
+
+        async function handleEmailSummarize(params, transcript) {
+            try {
+                // Set the active tool
+                AppState.activateTool("email");
+                
+                // Brief verbal acknowledgment
+                await processAIResponse(`Checking your ${params.count || 3} recent emails.`);
+                
+                // Number of emails to summarize
+                const count = params.count || 3;
+                
+                // Generate dummy email summaries
+                let emailContent = `
+                    <div class="email-list">
+                        <h4>Recent Emails (${count})</h4>
+                `;
+                
+                // Sample email data
+                const sampleEmails = [
+                    {
+                        from: "john.doe@example.com",
+                        subject: "Project Status Update",
+                        date: "Today, 10:30 AM",
+                        preview: "The latest project milestones have been completed ahead of schedule. We're now moving into the testing phase and need your feedback on the current implementation."
+                    },
+                    {
+                        from: "marketing@company.com",
+                        subject: "Marketing Campaign Results",
+                        date: "Yesterday, 4:15 PM",
+                        preview: "The Q3 marketing campaign exceeded expectations with a 22% increase in engagement. Key metrics attached in the report show significant growth in all target demographics."
+                    },
+                    {
+                        from: "support@service.com",
+                        subject: "Your Support Ticket #45678",
+                        date: "Jan 15, 2:45 PM",
+                        preview: "Your recent support request has been resolved. The technical team implemented the solution and would appreciate your feedback on the service provided."
+                    },
+                    {
+                        from: "hr@company.com",
+                        subject: "Upcoming Team Building Event",
+                        date: "Jan 14, 9:20 AM",
+                        preview: "We're organizing a team building event next month. Please complete the attached survey to indicate your preferences for activities and dietary requirements."
+                    },
+                    {
+                        from: "sales@vendor.com",
+                        subject: "New Product Announcement",
+                        date: "Jan 10, 11:05 AM",
+                        preview: "We're excited to announce our new product line that will be launching next quarter. As a valued customer, you're invited to an exclusive preview event."
+                    }
+                ];
+                
+                // Add emails to the content
+                for (let i = 0; i < Math.min(count, sampleEmails.length); i++) {
+                    const email = sampleEmails[i];
+                    emailContent += `
+                        <div class="email-item">
+                            <div class="email-item-header">
+                                <span>${email.from}</span>
+                                <span>${email.date}</span>
+                            </div>
+                            <div class="email-item-subject">${email.subject}</div>
+                            <div class="email-item-preview">${email.preview}</div>
+                        </div>
+                    `;
+                }
+                
+                emailContent += `
+                    <div class="tool-buttons">
+                        <button class="tool-button secondary" id="email-refresh">Refresh</button>
+                        <button class="tool-button secondary" id="email-close">Close</button>
+                    </div>
+                </div>`;
+                
+                // Show the tool with the email summaries
+                showTool("Email Summary");
+                document.getElementById('toolContent').innerHTML = emailContent;
+                
+                // Add event listener for close button
+                document.getElementById('email-close').addEventListener('click', () => {
+                    hideTool();
+                    // Deactivate the tool when closed
+                    AppState.deactivateTool();
+                });
+                
+                // Add event listener for refresh button (placeholder)
+                document.getElementById('email-refresh').addEventListener('click', () => {
+                    // This would typically refresh the email list
+                    // For now, just acknowledge the click
+                    addToConversationLog("Refreshing email list", "ai");
+                });
+                
+                // Add only critical info to speech - keep it brief
+                let speechText = `Found ${count} recent emails.`;
+                await processAIResponse(speechText);
+                
+                // Add full details to conversation log without TTS
+                let logSummary = `Email summary: ${count} recent messages including Project Status Update, Marketing Campaign Results, and Support Ticket.`;
+                addToConversationLog(logSummary, "ai");
+                
+            } catch (error) {
+                console.error(`${AppState.logPrefix} Error in handleEmailSummarize:`, error);
+                await processAIResponse("Couldn't retrieve your emails. Please try again.");
+                
+                // Make sure to hide the tool if there's an error
+                try {
+                    hideTool();
+                } catch (e) {
+                    console.error(`${AppState.logPrefix} Error hiding tool:`, e);
+                }
+                
+                // Deactivate the tool on error
+                AppState.deactivateTool();
+            }
+        }
+
+        // Calendar Tool Handlers
+        async function handleCalendarCheck(params, transcript) {
+            try {
+                // Set the active tool
+                AppState.activateTool("calendar");
+
+                // Send a brief TTS response first - keep it minimal for cost optimization
+                await processAIResponse(`Checking your calendar for ${params.date === "today" ? "today" : params.date}.`);
+
+                // Generate a basic calendar view
+                const date = params.date === "today" ? new Date() : new Date();
+                const month = date.toLocaleString('default', { month: 'long' });
+                const year = date.getFullYear();
+
+                const dateStr = params.date === "today" ? "Today" : params.date;
+
+                let calendarContent = `
+                    <div class="calendar-view">
+                        <div class="calendar-header">
+                            <h4>${month} ${year}</h4>
+                        </div>
+                        <div class="calendar-days">
+                            <h5>${dateStr}'s Schedule (${date.toLocaleDateString()})</h5>
+                            <div class="calendar-event">
+                                <strong>9:00 AM - 10:00 AM</strong>: Team Standup
+                            </div>
+                            <div class="calendar-event">
+                                <strong>1:00 PM - 2:30 PM</strong>: Project Planning
+                            </div>
+                            <div class="calendar-event">
+                                <strong>4:00 PM - 5:00 PM</strong>: Client Call
+                            </div>
+                            
+                            <h5 class="free-time-header">Free Time Available:</h5>
+                            <div class="free-time-slot">
+                                <span>10:00 AM - 1:00 PM</span>
+                            </div>
+                            <div class="free-time-slot">
+                                <span>2:30 PM - 4:00 PM</span>
+                            </div>
+                            <div class="free-time-slot">
+                                <span>After 5:00 PM</span>
+                            </div>
+                        </div>
+                        <div class="tool-buttons">
+                            <button class="tool-button secondary" id="prev-day">Previous Day</button>
+                            <button class="tool-button secondary" id="calendar-close">Close</button>
+                            <button class="tool-button primary" id="next-day">Next Day</button>
+                        </div>
+                    </div>
+                `;
+
+                // Show the tool with the calendar content
+                showTool("Calendar for " + dateStr);
+                document.getElementById('toolContent').innerHTML = calendarContent;
+
+                // Add event listener for close button
+                document.getElementById('calendar-close').addEventListener('click', () => {
+                    hideTool();
+                    AppState.deactivateTool();
+                });
+
+                // Add event listeners for day navigation (placeholder functionality)
+                document.getElementById('prev-day').addEventListener('click', () => {
+                    // This would typically update the calendar to the previous day
+                    // For now, just acknowledge the click
+                    addToConversationLog("Viewing previous day", "ai");
+                });
+
+                document.getElementById('next-day').addEventListener('click', () => {
+                    // This would typically update the calendar to the next day
+                    // For now, just acknowledge the click
+                    addToConversationLog("Viewing next day", "ai");
+                });
+
+                // Add a brief summary to the conversation log without TTS
+                // We already sent a brief TTS response earlier, so no need for another speech output
+                const logSummary = `Calendar for ${dateStr}: 3 events (Team Standup, Project Planning, Client Call)`;
+                addToConversationLog(logSummary, "ai");
+
+            } catch (error) {
+                console.error(`${AppState.logPrefix} Error in handleCalendarCheck:`, error);
+                await processAIResponse("I couldn't access your calendar. Please try again.");
+
+                // Make sure to hide the tool if there's an error
+                try {
+                    hideTool();
+                } catch (e) {
+                    console.error(`${AppState.logPrefix} Error hiding tool:`, e);
+                }
+
+                // Deactivate the tool
+                AppState.deactivateTool();
+            }
+        }
+
+        async function handleCalendarAdd(params, transcript) {
+            try {
+                // Set the active tool
+                AppState.activateTool("calendar");
+
+                // Brief TTS response to acknowledge the request
+                await processAIResponse(`Creating a calendar event. Please review the details.`);
+
+                // Generate a form to add an event
+                const today = new Date().toISOString().split('T')[0];
+
+                let eventContent = `
+                    <div class="calendar-add-form">
+                        <h4>Add New Calendar Event</h4>
+                        <div class="calendar-form-fields">
+                            <div class="email-field">
+                                <label for="event-title">Event Title:</label>
+                                <input type="text" id="event-title" value="${params.title || 'New Meeting'}">
+                            </div>
+                            <div class="email-field">
+                                <label for="event-date">Date:</label>
+                                <input type="date" id="event-date" value="${today}">
+                            </div>
+                            <div class="email-field">
+                                <label for="event-time">Start Time:</label>
+                                <input type="time" id="event-time" value="${params.time || '10:00'}">
+                            </div>
+                            <div class="email-field">
+                                <label for="event-duration">Duration:</label>
+                                <select id="event-duration">
+                                    <option value="30">30 minutes</option>
+                                    <option value="60" selected>1 hour</option>
+                                    <option value="90">1.5 hours</option>
+                                    <option value="120">2 hours</option>
+                                </select>
+                            </div>
+                            <div class="email-field">
+                                <label for="event-participants">Participants:</label>
+                                <input type="text" id="event-participants" value="john@example.com, sarah@example.com">
+                            </div>
+                            <div class="email-field">
+                                <label for="event-location">Location:</label>
+                                <input type="text" id="event-location" value="Conference Room A">
+                            </div>
+                        </div>
+                        <div class="tool-buttons">
+                            <button class="tool-button secondary" id="event-cancel">Cancel</button>
+                            <button class="tool-button primary" id="event-create">Create Event</button>
+                        </div>
+                    </div>
+                `;
+
+                // Show the tool with the event form
+                showTool("Add Calendar Event");
+                document.getElementById('toolContent').innerHTML = eventContent;
+
+                // Add event listeners
+                document.getElementById('event-create').addEventListener('click', async () => {
+                    // Get updated values from the form
+                    const title = document.getElementById('event-title').value;
+                    const date = document.getElementById('event-date').value;
+                    const time = document.getElementById('event-time').value;
+                    const dateObj = new Date(date);
+                    const formattedDate = dateObj.toLocaleDateString();
+                    const location = document.getElementById('event-location').value;
+                    const duration = document.getElementById('event-duration').value;
+
+                    AppState.pendingToolAction = {
+                        tool: "calendar",
+                        action: "create",
+                        params: {
+                            title,
+                            date: formattedDate,
+                            time,
+                            location,
+                            duration
+                        }
+                    };
+
+                    // This verbal prompt is brief and asks for confirmation
+                    await processAIResponse(`Create "${title}" on ${formattedDate}?`);
+                });
+
+                document.getElementById('event-cancel').addEventListener('click', async () => {
+                    hideTool();
+                    await processAIResponse("Event creation canceled.");
+                    // Make sure to deactivate the tool when canceling
+                    AppState.deactivateTool();
+                });
+
+            } catch (error) {
+                console.error(`${AppState.logPrefix} Error in handleCalendarAdd:`, error);
+                await processAIResponse("I couldn't create your calendar event. Please try again.");
+
+                // Make sure to hide the tool if there's an error
+                try {
+                    hideTool();
+                } catch (e) {
+                    console.error(`${AppState.logPrefix} Error hiding tool:`, e);
+                }
+
+                // Deactivate the tool
+                AppState.deactivateTool();
+            }
+        }
+
+        // Close tool button event listener
+        document.getElementById('closeTool').addEventListener('click', () => {
+            hideTool();
+        });
+
+        // Modify the existing processAudio function to include tool intent detection
+        // We'll modify it to add a tool detection step after STT is complete
+
+        // Add this block after the transcript is received in the processAudio function
+
+        // Inside your processAudio function, add this after:
+        // const transcript = sttData.transcript;
+        // console.log(`${AppState.logPrefix} Received transcript: "${transcript}"`);
+
+        // Add the following code to update your processAudio function:
+
+        // IMPORTANT: Update your existing processAudio function to include tool handling
+        // Look for where the transcript is received (around line 926)
+        // Add this code right after "const transcript = sttData.transcript;"
+
+        // Add missing tool UI functions
+        function showTool(title) {
+            const toolSidebar = document.getElementById('toolSidebar');
+            const toolTitle = document.getElementById('toolTitle');
+
+            if (toolSidebar && toolTitle) {
+                toolTitle.textContent = title || 'Tool';
+                toolSidebar.style.display = 'block';
+                document.getElementById('toolContent').innerHTML = ''; // Clear previous content
+            } else {
+                console.error(`${AppState.logPrefix} Tool UI elements not found`);
+            }
+        }
+
+        function hideTool() {
+            const toolSidebar = document.getElementById('toolSidebar');
+
+            if (toolSidebar) {
+                toolSidebar.style.display = 'none';
+                document.getElementById('toolContent').innerHTML = ''; // Clear content
+            } else {
+                console.error(`${AppState.logPrefix} Tool UI element not found`);
+            }
+        }
+
+        // Process recorded audio - UPDATED VERSION
         async function processAudio() {
             if (!AppState.audioBlob || AppState.audioBlob.size === 0 || AppState.isProcessing) {
                 console.log(`${AppState.logPrefix} Cannot process audio - no blob, empty blob, or already processing`);
                 return;
             }
-            
+
             AppState.isProcessing = true;
             AppState.lastProcessedTime = Date.now();
             console.log(`${AppState.logPrefix} Processing audio blob of size: ${AppState.audioBlob.size} bytes`);
-            
+
             // Skip processing if the audio is too small to contain meaningful speech
             if (AppState.audioBlob.size < settings.minAudioSize) {
                 console.log(`${AppState.logPrefix} Audio too small to contain speech, skipping processing`);
                 AppState.isProcessing = false;
-                
-                // Call the resume recording callback if available
-                if (window.resumeRecordingCallback) {
-                    console.log(`${AppState.logPrefix} Calling resume callback after skipping small audio`);
-                    window.resumeRecordingCallback();
-                    window.resumeRecordingCallback = null;
-                }
+
+                resumeRecordingAfterProcessing();
                 return;
             }
-            
+
             // Create FormData with the audio blob
             const formData = new FormData();
             formData.append('audio', AppState.audioBlob);
-            
+
             try {
                 // Step 1: Speech to Text
                 statusElement.textContent = "Converting speech to text...";
                 console.log(`${AppState.logPrefix} Sending audio to STT API`);
-                
+
                 const sttResponse = await fetch('/api/stt', {
                     method: 'POST',
                     body: formData,
                     // Add timeout to prevent hanging requests
                     signal: AbortSignal.timeout(10000) // 10 second timeout
                 });
-                
+
                 if (!sttResponse.ok) {
                     throw new Error(`STT server error: ${sttResponse.status} - ${await sttResponse.text()}`);
                 }
-                
+
                 const sttData = await sttResponse.json();
                 if (!sttData.success) {
                     throw new Error(sttData.error || 'Failed to transcribe audio');
                 }
-                
+
                 const transcript = sttData.transcript;
                 console.log(`${AppState.logPrefix} Received transcript: "${transcript}"`);
-                
+
                 if (!transcript || transcript.trim() === '') {
                     // Silently resume recording without any messages about no speech
                     console.log(`${AppState.logPrefix} No speech detected in transcription`);
                     AppState.isProcessing = false;
-                    if (window.resumeRecordingCallback) {
-                        console.log(`${AppState.logPrefix} Calling resume callback after empty transcript`);
-                        window.resumeRecordingCallback();
-                        window.resumeRecordingCallback = null;
-                    }
+                    resumeRecordingAfterProcessing();
                     return;
                 }
-                
+
                 // Skip if transcript contains only filler words
                 const fillerWords = ['um', 'uh', 'mmm', 'hmm', 'ah', 'er'];
                 const cleanTranscript = transcript.toLowerCase().trim();
                 if (fillerWords.some(word => cleanTranscript === word)) {
                     console.log(`${AppState.logPrefix} Skipping filler: "${cleanTranscript}"`);
                     AppState.isProcessing = false;
-                    if (window.resumeRecordingCallback) {
-                        console.log(`${AppState.logPrefix} Calling resume callback after filler words`);
-                        window.resumeRecordingCallback();
-                        window.resumeRecordingCallback = null;
-                    }
+                    resumeRecordingAfterProcessing();
                     return;
                 }
-                
+
                 // Update transcript display
                 transcriptText.textContent = transcript;
                 transcriptDiv.style.display = 'block';
-                
+
                 // Add user message to conversation log
                 addToConversationLog(transcript, "user");
-                
-                // Step 2: Send to Agent
+
+                // Check for pending tool confirmations first
+                if (AppState.pendingToolAction) {
+                    try {
+                        const wasConfirmation = await processToolConfirmation(transcript);
+                        if (wasConfirmation) {
+                            // If it was a confirmation, we don't need to process further
+                            AppState.isProcessing = false;
+                            resumeRecordingAfterProcessing();
+                            return;
+                        }
+                    } catch (error) {
+                        console.error(`${AppState.logPrefix} Error processing tool confirmation:`, error);
+                    }
+                }
+
+                // Instead of detecting intent locally, let the AI model detect it
+                // Step 2: Send to Agent with proper system prompt about capabilities
                 statusElement.textContent = "Getting AI response...";
-                console.log(`${AppState.logPrefix} Sending transcript to Agent API`);
-                
+                console.log(`${AppState.logPrefix} Sending transcript to Agent API with capabilities context`);
+
+                // Create a detailed system prompt that explains the assistant's capabilities
+                const systemPrompt = `You are DelightMate, a powerful voice assistant with these capabilities:
+
+✅ Writing and sending emails
+✅ Summarizing emails 
+✅ Checking calendar availability
+✅ Adding events to calendars
+✅ Voice conversations
+
+CAPABILITIES GUIDE:
+1. When a user asks you to send an email, respond enthusiastically like "Of course! I'll help you draft that email." NEVER say you can't send emails.
+2. When a user asks about their calendar, respond positively like "Let me check your calendar for you." NEVER say you can't access calendars.
+3. Keep responses concise and conversational.
+
+INTENT DETECTION:
+When you identify a user intent related to a specific tool, include it in your response in this format:
+- For email composition: {"tool": "email", "action": "compose", "params": {"recipient": "NAME", "subject": "SUBJECT"}}
+- For email summary: {"tool": "email", "action": "summarize", "params": {"count": NUMBER}}
+- For calendar checking: {"tool": "calendar", "action": "check", "params": {"date": "DATE"}}
+- For calendar event creation: {"tool": "calendar", "action": "add", "params": {"title": "TITLE", "date": "DATE", "time": "TIME"}}
+If no specific tool intent is detected, return null for the intent.
+
+RESPONSE FORMAT:
+- For regular questions: Provide a helpful, brief response.
+- For email requests: Respond with "I'll help you write that email" or similar and assume you can do it.
+- For calendar requests: Respond with "I'll check your calendar" or similar and assume you can do it.
+- NEVER say you're an AI that can't perform these tasks - you are a voice assistant with these capabilities.
+
+Your response should include both a conversational text reply AND the detected intent object.
+
+The system will handle the actual implementation of these capabilities.`;
+
+                // Include the transcript and system prompt in the request to OpenAI
+                const agentRequestBody = {
+                    transcript: transcript,
+                    system_prompt: systemPrompt
+                };
+
+                // Send request to the agent API
                 const agentResponse = await fetch('/api/agent', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ transcript }),
+                    body: JSON.stringify(agentRequestBody),
                     // Add timeout to prevent hanging requests
                     signal: AbortSignal.timeout(30000) // 30 second timeout
                 });
-                
+
                 if (!agentResponse.ok) {
                     throw new Error(`Agent server error: ${agentResponse.status}`);
                 }
-                
+
                 const agentData = await agentResponse.json();
                 if (!agentData.success) {
                     throw new Error(agentData.error || 'Failed to process with agent');
                 }
-                
-                console.log(`${AppState.logPrefix} Received agent response`);
-                
+
+                console.log(`${AppState.logPrefix} Received agent response:`, agentData);
+
+                // Extract text response and detected intent from the agent response
+                const responseText = agentData.response;
+                const detectedIntent = agentData.intent;
+
                 // Add AI response to conversation log
-                addToConversationLog(agentData.response, "ai");
-                
-                // Step 3: Text to Speech
-                statusElement.textContent = "Converting response to speech...";
-                console.log(`${AppState.logPrefix} Sending response to TTS API`);
-                
-                const ttsResponse = await fetch('/api/tts', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ text: agentData.response }),
-                    // Add timeout to prevent hanging requests
-                    signal: AbortSignal.timeout(15000) // 15 second timeout
-                });
-                
-                if (!ttsResponse.ok) {
-                    throw new Error(`TTS server error: ${ttsResponse.status}`);
-                }
-                
-                console.log(`${AppState.logPrefix} Received TTS audio response`);
-                
-                // Play the audio response
-                const audioBlob = await ttsResponse.blob();
-                const audioUrl = URL.createObjectURL(audioBlob);
-                audioPlayer.src = audioUrl;
-                audioPlayer.style.display = 'block';
-                
-                audioPlayer.onended = () => {
-                    // Resume listening after audio finishes
-                    console.log(`${AppState.logPrefix} Audio playback ended, resuming listening`);
-                    audioPlayer.style.display = 'none';
-                    
-                    // Call the resume recording callback if available
-                    if (window.resumeRecordingCallback) {
-                        console.log(`${AppState.logPrefix} Calling resume callback after audio playback`);
-                        window.resumeRecordingCallback();
-                        window.resumeRecordingCallback = null;
-                    } else {
-                        // Fallback if callback is missing - restart recording directly
-                        console.log(`${AppState.logPrefix} No callback found - using fallback restart`);
-                        if (AppState.conversationActive) {
-                            setTimeout(startRecording, 500);
-                        }
-                    }
-                };
-                
-                audioPlayer.onerror = (e) => {
-                    console.error(`${AppState.logPrefix} Audio playback error:`, e);
-                    audioPlayer.style.display = 'none';
-                    statusElement.textContent = "Error playing response";
-                    
-                    // Still try to resume recording
-                    if (window.resumeRecordingCallback) {
-                        console.log(`${AppState.logPrefix} Calling resume callback after audio error`);
-                        window.resumeRecordingCallback();
-                        window.resumeRecordingCallback = null;
-                    }
-                };
-                
-                statusElement.textContent = "Playing response...";
-                
-                try {
-                    console.log(`${AppState.logPrefix} Starting audio playback`);
-                    const playPromise = audioPlayer.play();
-                    
-                    if (playPromise !== undefined) {
-                        playPromise.catch(error => {
-                            console.error(`${AppState.logPrefix} Playback failed:`, error);
-                            // If autoplay was prevented, try to recover
-                            if (window.resumeRecordingCallback) {
-                                console.log(`${AppState.logPrefix} Calling resume callback after playback failure`);
-                                window.resumeRecordingCallback();
-                                window.resumeRecordingCallback = null;
-                            }
-                        });
-                    }
-                } catch (playError) {
-                    console.error(`${AppState.logPrefix} Error during play():`, playError);
-                    if (window.resumeRecordingCallback) {
-                        console.log(`${AppState.logPrefix} Calling resume callback after play error`);
-                        window.resumeRecordingCallback();
-                        window.resumeRecordingCallback = null;
+                addToConversationLog(responseText, "ai");
+
+                // Convert to speech using TTS API
+                await processAIResponseTTS(responseText);
+
+                // After the AI response and TTS, handle the detected tool intent if any
+                if (detectedIntent) {
+                    try {
+                        console.log(`${AppState.logPrefix} Processing detected intent from AI:`, detectedIntent);
+                        AppState.isProcessingTool = true;
+                        await handleToolIntent(detectedIntent, transcript);
+                        AppState.isProcessingTool = false;
+                    } catch (error) {
+                        console.error(`${AppState.logPrefix} Error handling tool:`, error);
+                        AppState.isProcessingTool = false;
                     }
                 }
-                
+
+                // Resume recording after processing is complete
+                resumeRecordingAfterProcessing();
+
             } catch (error) {
                 console.error(`${AppState.logPrefix} Error:`, error);
                 statusElement.textContent = 'Error: ' + error.message;
                 addToConversationLog("Sorry, I encountered an error: " + error.message, "ai");
-                
+
                 // Resume listening after error
                 setTimeout(() => {
-                    if (window.resumeRecordingCallback) {
-                        console.log(`${AppState.logPrefix} Calling resume callback after error recovery`);
-                        window.resumeRecordingCallback();
-                        window.resumeRecordingCallback = null;
-                    }
+                    resumeRecordingAfterProcessing();
                 }, 2000);
             } finally {
                 AppState.isProcessing = false;
                 AppState.pauseDetected = false;
             }
         }
-        
-        // Add message to conversation log
-        function addToConversationLog(message, sender) {
-            const messageDiv = document.createElement('div');
-            messageDiv.className = sender === 'user' ? 'user-message' : 'ai-message';
-            messageDiv.textContent = message;
-            conversationLog.appendChild(messageDiv);
-            
-            // Scroll to bottom
-            conversationLog.scrollTop = conversationLog.scrollHeight;
+
+        // Helper function to resume recording after processing
+        function resumeRecordingAfterProcessing() {
+            if (window.resumeRecordingCallback) {
+                console.log(`${AppState.logPrefix} Calling resume callback after processing`);
+                const callback = window.resumeRecordingCallback;
+                window.resumeRecordingCallback = null;
+                callback();
+            } else {
+                // Fallback if callback is missing - restart recording directly
+                console.log(`${AppState.logPrefix} No callback found - using fallback restart`);
+                if (AppState.conversationActive) {
+                    setTimeout(startRecording, 500);
+                }
+            }
         }
-        
+
         // Initialize on load
         window.addEventListener('load', () => {
             initCanvas();
-            
+
             // Set initial values from settings
             silenceThresholdInput.value = settings.silenceThreshold;
             pauseThresholdInput.value = settings.pauseThreshold;
@@ -1161,21 +2317,122 @@
             if (continuousModeCheckbox) {
                 continuousModeCheckbox.checked = settings.continuousMode;
             }
-            
+
             // Make sure resumeRecordingCallback is defined
             if (!window.resumeRecordingCallback) {
                 window.resumeRecordingCallback = null;
             }
-            
+
+            // Add the isProcessingTool flag
+            AppState.isProcessingTool = false;
+
             console.log(`${AppState.logPrefix} Voice Assistant initialized`);
         });
-        
+
         // Handle window resize for canvas
         window.addEventListener('resize', () => {
             if (visualizerCanvas) {
                 initCanvas();
             }
         });
+
+        // Add message to conversation log function - need to re-add this
+        function addToConversationLog(message, sender) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = sender === 'user' ? 'user-message' : 'ai-message';
+
+            // Support for newlines in messages
+            if (typeof message === 'string' && message.includes('\n')) {
+                message.split('\n').forEach((line, index) => {
+                    if (index > 0) {
+                        messageDiv.appendChild(document.createElement('br'));
+                    }
+                    messageDiv.appendChild(document.createTextNode(line));
+                });
+            } else {
+                messageDiv.textContent = message;
+            }
+
+            conversationLog.appendChild(messageDiv);
+
+            // Scroll to bottom
+            conversationLog.scrollTop = conversationLog.scrollHeight;
+        }
+
+        // Fix: Make sure processAIResponse is defined before it's used in the tool handlers
+        // This function must be defined before any tool handling functions that use it
+        async function processAIResponse(message) {
+            // First add it to the conversation log
+            addToConversationLog(message, "ai");
+
+            // Then convert to speech using TTS API
+            return await processAIResponseTTS(message);
+        }
+
+        // Helper function specifically for TTS without conversation log (already added by processAIResponse)
+        async function processAIResponseTTS(message) {
+            try {
+                statusElement.textContent = "Converting response to speech...";
+                console.log(`${AppState.logPrefix} Sending response to TTS API`);
+
+                const ttsResponse = await fetch('/api/tts', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ text: message }),
+                    // Add timeout to prevent hanging requests
+                    signal: AbortSignal.timeout(15000) // 15 second timeout
+                });
+
+                if (!ttsResponse.ok) {
+                    throw new Error(`TTS server error: ${ttsResponse.status}`);
+                }
+
+                console.log(`${AppState.logPrefix} Received TTS audio response`);
+
+                // Play the audio response
+                const audioBlob = await ttsResponse.blob();
+                const audioUrl = URL.createObjectURL(audioBlob);
+                audioPlayer.src = audioUrl;
+                audioPlayer.style.display = 'block';
+
+                // Create a Promise that resolves when audio playback completes
+                return new Promise((resolve, reject) => {
+                    const onEnded = () => {
+                        console.log(`${AppState.logPrefix} Audio playback ended, resuming listening`);
+                        audioPlayer.style.display = 'none';
+                        audioPlayer.removeEventListener('ended', onEnded);
+                        audioPlayer.removeEventListener('error', onError);
+                        resolve(true);
+                    };
+
+                    const onError = (error) => {
+                        console.error(`${AppState.logPrefix} Audio playback error:`, error);
+                        audioPlayer.style.display = 'none';
+                        audioPlayer.removeEventListener('ended', onEnded);
+                        audioPlayer.removeEventListener('error', onError);
+                        reject(error);
+                    };
+
+                    // Set up event listeners
+                    audioPlayer.addEventListener('ended', onEnded);
+                    audioPlayer.addEventListener('error', onError);
+
+                    statusElement.textContent = "Playing response...";
+
+                    // Start playback
+                    audioPlayer.play().catch(error => {
+                        console.error(`${AppState.logPrefix} Error starting audio playback:`, error);
+                        onError(error);
+                    });
+                });
+            } catch (error) {
+                console.error(`${AppState.logPrefix} Error during TTS:`, error);
+                return false;
+            }
+        }
     </script>
 </body>
-</html> 
+
+</html>
