@@ -1,8 +1,12 @@
 import redis
+import os
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Build the connection URL first
-REDIS_URL = "redis://default:zLGGlwmbYWg2YTiC0ighWpEwVqZtNCdc@redis-17241.c11.us-east-1-3.ec2.redns.redis-cloud.com:17241"
-
+REDIS_URL = os.environ.get("REDIS_URL")
 
 # Create a Redis client using the URL
 redis_client = redis.from_url(
