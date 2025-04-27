@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, redirect, url_for, session, request, jsonify, flash
+from flask import Blueprint, render_template, redirect, url_for, session, request, jsonify, flash, g
 import os
 import sys
 import json
@@ -12,7 +12,9 @@ import logging
 
 # Add the parent directory to sys.path to ensure imports work correctly
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from services.user_service import save_user_and_gmail_account
+from services.user_service import (save_user_and_gmail_account, get_credentials_from_supabase, 
+                                  get_user_profile_info, get_user_by_email)
+from app.utils.session_manager import get_user_info
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -54,6 +56,9 @@ SCOPES = [
     'https://www.googleapis.com/auth/gmail.send',
     'https://www.googleapis.com/auth/userinfo.email',
     'https://www.googleapis.com/auth/userinfo.profile',
+    'https://www.googleapis.com/auth/calendar.readonly',
+    'https://www.googleapis.com/auth/calendar.events',
+    'https://www.googleapis.com/auth/calendar',
     'openid'
 ]
 
@@ -73,8 +78,105 @@ def build_client_config():
 
 @email_bp.route('/')
 def email_home():
-    """Display the Connect Gmail page"""
-    return render_template('email/connect.html')
+    """Display the email inbox or redirect to login if not authenticated"""
+    # Check if user is logged in via session
+    # if 'google_credentials' in session:
+    if session.get('google_credentials') and session.get('user'):
+
+        creds_data = session['google_credentials']
+        credentials = Credentials(
+            token=creds_data['token'],
+            refresh_token=creds_data['refresh_token'],
+            token_uri=creds_data['token_uri'],
+            client_id=creds_data['client_id'],
+            client_secret=creds_data['client_secret'],
+            scopes=creds_data['scopes']
+        )
+        
+        # Check if token expired and refresh if needed
+        if credentials.expired and credentials.refresh_token:
+            try:
+                credentials.refresh(Request())
+                # Update session with new token
+                session['google_credentials']['token'] = credentials.token
+                if hasattr(credentials, 'expiry'):
+                    session['google_credentials']['expiry'] = credentials.expiry.isoformat()
+            except Exception as e:
+                logger.error(f"Error refreshing token: {str(e)}")
+                return redirect(url_for('email.email_login'))
+                
+        # Get user profile info for display
+        user_info = get_user_profile_info(credentials)
+        
+        # Build Gmail service for inbox display
+        try:
+            gmail_service = build('gmail', 'v1', credentials=credentials)
+            
+            # Fetch messages for inbox display
+            # This is a basic implementation - will enhance with more features
+            messages_result = gmail_service.users().messages().list(
+                userId='me',
+                maxResults=20,
+                q='in:inbox'
+            ).execute()
+            
+            # Process messages for display
+            messages = []
+            if 'messages' in messages_result:
+                for msg in messages_result['messages']:
+                    message_data = gmail_service.users().messages().get(
+                        userId='me', 
+                        id=msg['id'],
+                        format='metadata',
+                        metadataHeaders=['From', 'Subject', 'Date']
+                    ).execute()
+                    
+                    # Extract headers
+                    headers = {}
+                    for header in message_data.get('payload', {}).get('headers', []):
+                        headers[header['name']] = header['value']
+                    
+                    # Add processed message to list
+                    messages.append({
+                        'id': msg['id'],
+                        'snippet': message_data.get('snippet', ''),
+                        'from': headers.get('From', ''),
+                        'subject': headers.get('Subject', '(No Subject)'),
+                        'date': headers.get('Date', ''),
+                        'unread': 'UNREAD' in message_data.get('labelIds', [])
+                    })
+            
+            return render_template('email/inbox.html', 
+                                  user=user_info,
+                                  messages=messages)
+                                  
+        except Exception as e:
+            logger.error(f"Error accessing Gmail API: {str(e)}")
+            flash("Error accessing your Gmail. Please try again.", "error")
+            return redirect(url_for('email.email_login'))
+    
+    # Not logged in, try to get credentials from database
+    if 'user' in session and session['user'].get('email'):
+        # Attempt to recover credentials from Supabase
+        credentials, user_data = get_credentials_from_supabase(session['user']['email'])
+        
+        if credentials:
+            # Store credentials in session
+            session['google_credentials'] = {
+                'token': credentials.token,
+                'refresh_token': credentials.refresh_token,
+                'token_uri': credentials.token_uri,
+                'client_id': credentials.client_id,
+                'client_secret': credentials.client_secret,
+                'scopes': credentials.scopes,
+                'email': session['user']['email']
+            }
+            
+            # Redirect back to the email home to process with new credentials
+            return redirect(url_for('email.email_home'))
+    
+    # No valid credentials, redirect to login
+    return redirect(url_for('email.email_login'))
 
 # @email_bp.route('/login')
 # def email_login():
@@ -104,7 +206,7 @@ def email_home():
 def email_login():
     """Handle Google OAuth2 login, with auto-refresh if already logged in."""
     # If already authenticated
-    print("Checking for existing credentials...")
+    logger.info("Checking for existing credentials...")
     if 'google_credentials' in session:
         creds_data = session['google_credentials']
         credentials = Credentials(
@@ -117,25 +219,26 @@ def email_login():
         )
         
         # Check if access token expired
-        if credentials.expired:
+        if hasattr(credentials, 'expired') and credentials.expired:
             logger.info("Access token expired. Attempting to refresh...")
             try:
                 credentials.refresh(Request())
                 
                 # Update session with new token and expiry
                 session['google_credentials']['token'] = credentials.token
-                session['google_credentials']['expiry'] = credentials.expiry.isoformat()
+                if hasattr(credentials, 'expiry'):
+                    session['google_credentials']['expiry'] = credentials.expiry.isoformat()
                 
-                logger.info("Access token refreshed successfully. Redirecting to home.")
-                return redirect(url_for('home'))  # Redirect to your home page
+                logger.info("Access token refreshed successfully. Redirecting to email home.")
+                return redirect(url_for('email.email_home'))
             except Exception as e:
                 logger.error(f"Failed to refresh token: {str(e)}")
                 # Token refresh failed, proceed to login normally
 
         else:
             # Token still valid
-            logger.info("Already logged in with valid access token. Redirecting to home.")
-            return redirect(url_for('home'))
+            logger.info("Already logged in with valid access token. Redirecting to email home.")
+            return redirect(url_for('email.email_home'))
 
     # If no credentials or refresh failed, do full login
     client_config = build_client_config()
@@ -183,8 +286,12 @@ def oauth2callback():
 
         credentials = flow.credentials
 
-        # Get user info from Google to identify the user
-        user_email = get_user_email(credentials)
+        # Get full user profile info from Google
+        user_info = get_user_profile_info(credentials)
+        user_email = user_info.get('email')
+        user_name = user_info.get('name')
+        user_picture = user_info.get('picture')
+        
         if not user_email:
             logger.error("Could not retrieve user email from Google")
             flash("Could not verify your identity with Google", "error")
@@ -193,16 +300,34 @@ def oauth2callback():
         # Calculate token expiry
         token_expiry = datetime.datetime.now() + datetime.timedelta(seconds=credentials.expiry.timestamp() - datetime.datetime.now().timestamp())
 
-        # Save credentials to Supabase
-        success, error = save_user_and_gmail_account(
-            email=user_email,
-            gmail_address=user_email,  # Typically the same as user email
-            access_token=credentials.token,
-            refresh_token=credentials.refresh_token,
-            token_expiry=token_expiry
-        )
+        try:
+            # Save credentials and user profile to Supabase
+            # Handle database compatibility issues - some columns may not exist yet
+            result = save_user_and_gmail_account(
+                email=user_email,
+                gmail_address=user_email,  # Typically the same as user email
+                access_token=credentials.token,
+                refresh_token=credentials.refresh_token,
+                token_expiry=token_expiry,
+                name=user_name,
+                picture_url=user_picture
+            )
+            
+            # Check the length of the returned tuple
+            if len(result) == 3:
+                success, error, user_id = result
+            else:
+                # Fallback for backward compatibility
+                success, error = result
+                user_id = None
+                logger.warning("Database function returned incomplete data. Using fallback.")
+        except Exception as e:
+            logger.error(f"Error saving credentials: {str(e)}")
+            success = False
+            error = f"Error saving credentials: {str(e)}"
+            user_id = None
 
-        # Store credentials in session for immediate use
+        # Always store credentials in session for immediate use regardless of database success
         session['google_credentials'] = {
             'token': credentials.token,
             'refresh_token': credentials.refresh_token,
@@ -212,6 +337,17 @@ def oauth2callback():
             'scopes': credentials.scopes,
             'email': user_email
         }
+        
+        # Store user info in session
+        session['user'] = {
+            'id': user_id,
+            'email': user_email,
+            'name': user_name,
+            'picture': user_picture
+        }
+        
+        # Force session save
+        session.modified = True
 
         if not success:
             logger.error(f"Failed to save credentials to database: {error}")
@@ -277,6 +413,8 @@ def test_gmail_api():
 @email_bp.route('/logout')
 def logout():
     """Clear the session and log out"""
-    if 'google_credentials' in session:
-        del session['google_credentials']
-    return redirect(url_for('email.email_home'))
+    from app.utils.session_manager import clear_user_info
+    clear_user_info()
+    flash("You have been logged out", "info")
+    return redirect(url_for('home'))
+

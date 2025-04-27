@@ -5,6 +5,7 @@ from app.extensions import redis_client
 import json
 
 from app.utils.supabase import get_supabase_client
+from app.utils.session_manager import get_user_info
 import uuid
 from datetime import datetime
 import logging
@@ -34,11 +35,12 @@ app.secret_key = os.environ.get('SECRET_KEY')
 from app.routes.voice import bp as voice_bp
 from app.routes.agent import bp as agent_bp
 from app.routes.email import email_bp
-
+from app.routes.calendar import calendar_bp
 
 app.register_blueprint(voice_bp)
 app.register_blueprint(agent_bp)
 app.register_blueprint(email_bp)
+app.register_blueprint(calendar_bp)
 
 # Error handlers
 @app.errorhandler(404)
@@ -52,9 +54,11 @@ def server_error(error):
 # Home route
 @app.route('/')
 def home():
-    supabase = get_supabase_client()
+    # session.clear()
+    # Get user info through session manager
+    user_info = get_user_info()
     
-    return render_template('index.html')
+    return render_template('index.html', user=user_info)
 
 # Audio interface route
 @app.route('/audio')
