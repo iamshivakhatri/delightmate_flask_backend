@@ -1,11 +1,12 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DelightMate - Your Intelligent Assistant</title>
+    <title>DelightMate - Your AI Assistant</title>
     <link href="{{ url_for('static', filename='css/tailwind.css') }}" rel="stylesheet">
     <link href="{{ url_for('static', filename='css/cosmic.css') }}" rel="stylesheet">
+    <script src="{{ url_for('static', filename='js/theme.js') }}"></script>
     <style>
         body, html {
             margin: 0;
@@ -16,30 +17,9 @@
         }
     </style>
 </head>
-<body>
+<body style="background-color: var(--bg-color);">
     <div class="cosmos-container">
-        <!-- Navigation -->
-        <div class="cosmic-nav">
-            <a href="/" class="nav-item active">Home</a>
-            <a href="/email" class="nav-item">Email</a>
-            <a href="/calendar" class="nav-item">Calendar</a>
-        </div>
-        
-        <!-- Theme Toggle -->
-        <button class="theme-toggle" id="themeToggle">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" id="themeIcon">
-                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" class="moon-icon"></path>
-                <circle cx="12" cy="12" r="5" class="sun-icon" style="display:none;"></circle>
-                <line x1="12" y1="1" x2="12" y2="3" class="sun-icon" style="display:none;"></line>
-                <line x1="12" y1="21" x2="12" y2="23" class="sun-icon" style="display:none;"></line>
-                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" class="sun-icon" style="display:none;"></line>
-                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" class="sun-icon" style="display:none;"></line>
-                <line x1="1" y1="12" x2="3" y2="12" class="sun-icon" style="display:none;"></line>
-                <line x1="21" y1="12" x2="23" y2="12" class="sun-icon" style="display:none;"></line>
-                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" class="sun-icon" style="display:none;"></line>
-                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" class="sun-icon" style="display:none;"></line>
-            </svg>
-        </button>
+        {% include 'components/navbar.html' %}
         
         <!-- User Profile -->
         {% if user and user.is_logged_in %}
@@ -56,8 +36,15 @@
         {% endif %}
         
         <!-- Voice Mode Indicator -->
-        <div class="voice-mode">Voice mode</div>
+        <!-- <div class="voice-mode">Voice mode</div> -->
         
+        <!-- Welcome Message -->
+        <!-- <div class="cosmic-welcome" id="welcomeMessage">
+            <h2>I'm DelightMate</h2>
+            <p>Your digital teammate ready to help with emails, calendar, and more.</p>
+            <p class="welcome-hint">Click the microphone to start speaking</p>
+        </div> -->
+
         <!-- Cosmic Sphere -->
         <div class="cosmos-sphere" id="cosmosSphere"></div>
         
@@ -94,7 +81,7 @@
 
     </div>
 
-    <!-- JavaScript for Cosmic Visualization -->
+    <!-- JavaScript for Cosmic Visualization and Audio Recording -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const cosmosSphere = document.getElementById('cosmosSphere');
@@ -102,67 +89,188 @@
             const micButton = document.getElementById('micButton');
             const messageContainer = document.getElementById('messageContainer');
             const responseMessage = document.getElementById('responseMessage');
-            const themeToggle = document.getElementById('themeToggle');
-            const themeIcon = document.getElementById('themeIcon');
-            const moonIcon = document.querySelector('.moon-icon');
-            const sunIcons = document.querySelectorAll('.sun-icon');
             let isListening = false;
-            
-            // Initialize theme from localStorage
-            initTheme();
+            let mediaRecorder = null;
+            let audioChunks = [];
+            let isProcessing = false;
             
             // Create cosmic particles
             createCosmicParticles();
             
-            // Theme toggle handler
-            themeToggle.addEventListener('click', function() {
-                toggleTheme();
-            });
-            
             // Microphone button click handler
             micButton.addEventListener('click', function() {
+                if (isProcessing) return; // Prevent multiple clicks during processing
+                
                 if (isListening) {
-                    stopListening();
-                    
-                    // Simulate response
-                    simulateResponse("I'm your AI assistant. I can help you manage emails, calendar, and answer questions. What would you like to do today?");
+                    stopRecording();
                 } else {
-                    startListening();
-                    
-                    // Simulate voice recognition (in a real app, use Web Speech API)
-                    setTimeout(() => {
-                        stopListening();
-                        simulateResponse("I'm your AI assistant. I can help you manage emails, calendar, and answer questions. What would you like to do today?");
-                    }, 3000);
+                    startRecording();
                 }
             });
             
-            // Initialize theme
-            function initTheme() {
-                const savedTheme = localStorage.getItem('theme') || 'dark';
-                document.documentElement.setAttribute('data-theme', savedTheme);
-                updateThemeIcon(savedTheme);
+            // Initialize audio recording capabilities
+            async function startRecording() {
+                try {
+                    // Request microphone access
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    
+                    // Start animation
+                    startListening();
+                    
+                    // Hide welcome message
+                    const welcomeMessage = document.getElementById('welcomeMessage');
+                    if (welcomeMessage) {
+                        welcomeMessage.style.opacity = '0';
+                        welcomeMessage.style.transform = 'translateY(-50px)';
+                    }
+                    
+                    // Setup audio context for visualization
+                    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    const analyser = audioContext.createAnalyser();
+                    const microphone = audioContext.createMediaStreamSource(stream);
+                    microphone.connect(analyser);
+                    analyser.fftSize = 256;
+                    const bufferLength = analyser.frequencyBinCount;
+                    const dataArray = new Uint8Array(bufferLength);
+                    
+                    // Setup media recorder
+                    mediaRecorder = new MediaRecorder(stream);
+                    audioChunks = [];
+                    
+                    mediaRecorder.ondataavailable = (event) => {
+                        audioChunks.push(event.data);
+                    };
+                    
+                    mediaRecorder.onstop = processAudio;
+                    
+                    // Start recording
+                    mediaRecorder.start();
+                    
+                    // Setup visualization animation
+                    function animate() {
+                        if (!isListening) return;
+                        
+                        analyser.getByteFrequencyData(dataArray);
+                        // Calculate average volume
+                        let sum = 0;
+                        for (let i = 0; i < bufferLength; i++) {
+                            sum += dataArray[i];
+                        }
+                        const average = sum / bufferLength;
+                        
+                        // Scale particles based on volume
+                        const particles = document.querySelectorAll('.particle');
+                        const scale = 1 + (average / 256) * 0.5; // Scale between 1 and 1.5
+                        
+                        // Make cosmos sphere pulsate based on audio level
+                        const pulseScale = 1 + (average / 256) * 0.1; // Subtle pulse effect
+                        cosmosSphere.style.transform = `scale(${pulseScale})`;
+                        
+                        particles.forEach(particle => {
+                            particle.style.transform = `scale(${scale})`;
+                        });
+                        
+                        requestAnimationFrame(animate);
+                    }
+                    
+                    animate();
+                    
+                } catch (err) {
+                    console.error('Error accessing microphone:', err);
+                    alert('Error accessing microphone. Please ensure your microphone is connected and permissions are granted.');
+                }
             }
             
-            // Toggle between light and dark themes
-            function toggleTheme() {
-                const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
-                const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-                
-                document.documentElement.setAttribute('data-theme', newTheme);
-                localStorage.setItem('theme', newTheme);
-                
-                updateThemeIcon(newTheme);
+            function stopRecording() {
+                if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                    isProcessing = true;
+                    statusText.textContent = 'Processing...';
+                    mediaRecorder.stop();
+                    stopListening();
+                }
             }
             
-            // Update theme icon based on current theme
-            function updateThemeIcon(theme) {
-                if (theme === 'dark') {
-                    moonIcon.style.display = 'block';
-                    sunIcons.forEach(icon => icon.style.display = 'none');
-                } else {
-                    moonIcon.style.display = 'none';
-                    sunIcons.forEach(icon => icon.style.display = 'block');
+            async function processAudio() {
+                try {
+                    const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                    const formData = new FormData();
+                    formData.append('audio', audioBlob);
+                    
+                    statusText.textContent = 'Processing...';
+                    statusText.classList.add('active');
+                    
+                    // Send to backend for processing
+                    const response = await fetch('/api/stt', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        // Process the transcript
+                        const transcript = data.transcript;
+                        console.log('Transcript:', transcript);
+                        
+                        // Show user message
+                        const userBubble = document.createElement('div');
+                        userBubble.className = 'user-bubble';
+                        userBubble.textContent = transcript;
+                        messageContainer.appendChild(userBubble);
+                        messageContainer.style.display = 'block';
+                        
+                        statusText.textContent = 'Thinking...';
+                        
+                        // Now get AI response for the transcript
+                        const aiResponse = await fetch('/api/chat', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({ message: transcript })
+                        });
+                        
+                        const aiData = await aiResponse.json();
+                        
+                        if (aiData.success) {
+                            // Display AI response
+                            simulateResponse(aiData.response);
+                            
+                            // Convert to speech
+                            speakResponse(aiData.response);
+                        } else {
+                            simulateResponse("I'm sorry, I couldn't process your request. Please try again.");
+                        }
+                    } else {
+                        simulateResponse("I couldn't hear you clearly. Could you please try again?");
+                    }
+                } catch (err) {
+                    console.error('Error processing audio:', err);
+                    simulateResponse("There was an error processing your audio. Please try again.");
+                } finally {
+                    isProcessing = false;
+                    statusText.classList.remove('active');
+                }
+            }
+            
+            async function speakResponse(text) {
+                try {
+                    const response = await fetch('/api/tts', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ text })
+                    });
+                    
+                    if (response.ok) {
+                        const blob = await response.blob();
+                        const url = URL.createObjectURL(blob);
+                        const audio = new Audio(url);
+                        audio.play();
+                    }
+                } catch (err) {
+                    console.error('Error with text-to-speech:', err);
                 }
             }
             
@@ -171,6 +279,8 @@
                 const colors = ['white', 'blue', 'cyan', 'purple', 'pink'];
                 const totalParticles = 200;
                 const sphereRadius = 180; // Radius of the cosmic sphere
+                
+                cosmosSphere.innerHTML = ''; // Clear existing particles
                 
                 for (let i = 0; i < totalParticles; i++) {
                     const particle = document.createElement('div');
@@ -222,10 +332,11 @@
                 isListening = true;
                 document.body.classList.add('listening');
                 statusText.classList.add('active');
+                statusText.textContent = 'Listening...';
                 cosmosSphere.classList.add('pulsate');
                 messageContainer.style.display = 'none';
                 
-                // Make particles bulge with microphone input (simulated)
+                // Make particles bulge with microphone input (real-time audio will handle this)
                 const particles = document.querySelectorAll('.particle');
                 particles.forEach(particle => {
                     // Add random delay for each particle to create a wave effect
@@ -240,26 +351,51 @@
                 document.body.classList.remove('listening');
                 statusText.classList.remove('active');
                 cosmosSphere.classList.remove('pulsate');
+                cosmosSphere.style.transform = '';
+                
+                // Show welcome message after response is displayed
+                setTimeout(() => {
+                    const welcomeMessage = document.getElementById('welcomeMessage');
+                    if (welcomeMessage && !messageContainer.style.display || messageContainer.style.display === 'none') {
+                        welcomeMessage.style.opacity = '0.95';
+                        welcomeMessage.style.transform = 'translateY(-100px)';
+                    }
+                }, 1000);
+                
+                // Reset particles
+                const particles = document.querySelectorAll('.particle');
+                particles.forEach(particle => {
+                    particle.style.transform = '';
+                });
             }
             
-            // Simulate AI response
+            // Display AI response with animation
             function simulateResponse(text) {
                 // Display the message container
                 messageContainer.style.display = 'block';
                 
+                // Create a new message bubble
+                const aiBubble = document.createElement('div');
+                aiBubble.className = 'ai-bubble';
+                messageContainer.appendChild(aiBubble);
+                
                 // Animate text appearing word by word
                 const words = text.split(' ');
-                responseMessage.textContent = ''; // Clear existing text
+                responseMessage.textContent = ''; // Clear existing text for the SR reader
                 
                 let wordIndex = 0;
                 const wordInterval = setInterval(() => {
                     if (wordIndex < words.length) {
-                        responseMessage.textContent += (wordIndex === 0 ? '' : ' ') + words[wordIndex];
+                        aiBubble.textContent += (wordIndex === 0 ? '' : ' ') + words[wordIndex];
+                        responseMessage.textContent = aiBubble.textContent; // For screen readers
                         wordIndex++;
                     } else {
                         clearInterval(wordInterval);
                     }
-                }, 100); // Speed of text appearance
+                }, 50); // Speed of text appearance - a bit faster than before
+                
+                // Scroll to the bottom of the container
+                messageContainer.scrollTop = messageContainer.scrollHeight;
             }
         });
     </script>

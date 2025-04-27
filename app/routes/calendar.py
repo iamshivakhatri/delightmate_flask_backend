@@ -92,9 +92,14 @@ def calendar_home():
                     'html_link': event.get('htmlLink', '')
                 })
             
+            # Pass current date information for navigation
+            now = datetime.datetime.utcnow()
+            
             return render_template('calendar/events.html', 
                                   user=user_info,
-                                  events=processed_events)
+                                  events=processed_events,
+                                  now=now,
+                                  datetime=datetime)
                                   
         except Exception as e:
             logger.error(f"Error accessing Calendar API: {str(e)}")

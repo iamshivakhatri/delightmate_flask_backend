@@ -7,6 +7,7 @@
   --nav-bg: rgba(30, 30, 40, 0.7);
   --control-bg: rgba(30, 30, 40, 0.8);
   --message-bg: rgba(25, 25, 35, 0.8);
+  --page-bg: var(--bg-color);
 }
 
 [data-theme="light"] {
@@ -30,6 +31,52 @@
   align-items: center;
   flex-direction: column;
   transition: background-color 0.5s ease;
+}
+
+.cosmic-welcome {
+  position: absolute;
+  top: 35%;
+  text-align: center;
+  z-index: 50;
+  max-width: 450px;
+  padding: 20px;
+  border-radius: 15px;
+  background-color: var(--message-bg);
+  border: 1px solid var(--circle-border);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  transform: translateY(-100px);
+  opacity: 0.95;
+  transition: all 0.5s ease;
+}
+
+.cosmic-welcome h2 {
+  font-size: 2.5rem;
+  margin-bottom: 10px;
+  background: linear-gradient(45deg, var(--accent-color), #a0e9ff);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-weight: bold;
+}
+
+.cosmic-welcome p {
+  font-size: 1.2rem;
+  line-height: 1.5;
+  opacity: 0.9;
+  margin-bottom: 10px;
+}
+
+.welcome-hint {
+  font-size: 0.9rem !important;
+  opacity: 0.7 !important;
+  font-style: italic;
+  margin-top: 15px;
+}
+
+body.listening .cosmic-welcome {
+  opacity: 0;
+  transform: translateY(-50px);
+  pointer-events: none;
 }
 
 .cosmos-sphere {
@@ -79,7 +126,7 @@ body.listening .particle {
 
 .controls {
   position: absolute;
-  bottom: 50px;
+  bottom: 40px;
   display: flex;
   gap: 20px;
   z-index: 10;
@@ -89,7 +136,7 @@ body.listening .particle {
 .theme-toggle {
   position: absolute;
   top: 20px;
-  right: 140px;
+  right: 200px;
   background-color: var(--nav-bg);
   width: 40px;
   height: 40px;
@@ -99,7 +146,7 @@ body.listening .particle {
   align-items: center;
   cursor: pointer;
   transition: background-color 0.3s ease;
-  z-index: 101;
+  z-index: 1001;
   border: none;
   color: var(--text-color);
 }
@@ -181,6 +228,53 @@ body.listening .particle {
   transform: translateY(10px);
   opacity: 0;
   animation: message-appear 0.5s forwards ease-out;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.user-bubble {
+  background-color: rgba(64, 90, 255, 0.2);
+  padding: 12px 16px;
+  border-radius: 18px 18px 18px 4px;
+  margin-bottom: 12px;
+  max-width: 80%;
+  align-self: flex-start;
+  word-wrap: break-word;
+  color: var(--text-color);
+  animation: bubble-appear 0.3s ease-out;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.ai-bubble {
+  background-color: rgba(64, 190, 255, 0.2);
+  padding: 12px 16px;
+  border-radius: 18px 18px 4px 18px;
+  margin-bottom: 12px;
+  max-width: 80%;
+  margin-left: auto;
+  word-wrap: break-word;
+  color: var(--text-color);
+  animation: bubble-appear 0.3s ease-out;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="light"] .user-bubble {
+  background-color: rgba(25, 60, 210, 0.1);
+}
+
+[data-theme="light"] .ai-bubble {
+  background-color: rgba(25, 119, 210, 0.1);
+}
+
+@keyframes bubble-appear {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .cosmic-message {
@@ -297,7 +391,7 @@ body.listening .particle {
 /* Voice mode indicator */
 .voice-mode {
   position: absolute;
-  top: 20px;
+  top: 100px;
   right: 20px;
   background-color: var(--nav-bg);
   color: var(--text-color);
@@ -319,7 +413,7 @@ body.listening .particle {
   padding: 5px 15px 5px 5px;
   border-radius: 25px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-  z-index: 100;
+  z-index: 1000;
   transition: background-color 0.3s ease, transform 0.3s ease;
 }
 
@@ -355,7 +449,7 @@ body.listening .particle {
   padding: 5px 15px;
   border-radius: 25px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-  z-index: 100;
+  z-index: 1000;
   transition: background-color 0.3s ease, transform 0.3s ease;
 }
 

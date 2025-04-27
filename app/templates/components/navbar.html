@@ -1,0 +1,49 @@
+<!-- Shared Navigation Bar for DelightMate -->
+<header class="cosmic-header py-4 px-6 flex justify-between items-center">
+    <div class="flex items-center">
+        <div class="p-2 mr-3">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+        </div>
+        <a href="/" class="text-2xl font-bold" style="color: var(--text-color);">DelightMate</a>
+    </div>
+    
+    <!-- Navigation -->
+    <div class="cosmic-nav">
+        <a href="/" class="nav-item {% if request.path == '/' %}active{% endif %}">Home</a>
+        <a href="/email" class="nav-item {% if '/email' in request.path %}active{% endif %}">Email</a>
+        <a href="/calendar" class="nav-item {% if '/calendar' in request.path %}active{% endif %}">Calendar</a>
+        <a href="/audio" class="nav-item {% if '/audio' in request.path %}active{% endif %}">Voice Tools</a>
+    </div>
+    
+    <!-- Theme Toggle -->
+    <button class="theme-toggle" id="themeToggle">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" id="themeIcon">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" class="moon-icon"></path>
+            <circle cx="12" cy="12" r="5" class="sun-icon" style="display:none;"></circle>
+            <line x1="12" y1="1" x2="12" y2="3" class="sun-icon" style="display:none;"></line>
+            <line x1="12" y1="21" x2="12" y2="23" class="sun-icon" style="display:none;"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" class="sun-icon" style="display:none;"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" class="sun-icon" style="display:none;"></line>
+            <line x1="1" y1="12" x2="3" y2="12" class="sun-icon" style="display:none;"></line>
+            <line x1="21" y1="12" x2="23" y2="12" class="sun-icon" style="display:none;"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" class="sun-icon" style="display:none;"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" class="sun-icon" style="display:none;"></line>
+        </svg>
+    </button>
+    
+    <!-- User Profile -->
+    {% if user and user.is_logged_in %}
+    <div class="cosmic-user-profile">
+        {% if user.picture %}
+        <img src="{{ user.picture }}" alt="Profile">
+        {% else %}
+        <div style="width: 40px; height: 40px; border-radius: 50%; background-color: var(--accent-color); display: flex; justify-content: center; align-items: center; color: white; font-weight: bold;">
+            {{ user.name[0] if user.name else 'U' }}
+        </div>
+        {% endif %}
+        <span class="cosmic-user-name">{{ user.name if user.name else 'User' }}</span>
+    </div>
+    {% endif %}
+</header>

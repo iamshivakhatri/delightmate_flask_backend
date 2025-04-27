@@ -6,6 +6,7 @@
   <title>DelightMate - Calendar Events</title>
   <link href="{{ url_for('static', filename='css/tailwind.css') }}" rel="stylesheet">
   <link href="{{ url_for('static', filename='css/cosmic.css') }}" rel="stylesheet">
+  <script src="{{ url_for('static', filename='js/theme.js') }}"></script>
   <style>
     :root {
       --event-card-bg: var(--control-bg);
@@ -23,10 +24,15 @@
       --header-border: rgba(25, 119, 210, 0.3);
     }
     
-    body {
+    body, html {
       background-color: var(--bg-color);
       color: var(--text-color);
       transition: background-color 0.5s ease, color 0.5s ease;
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow-x: hidden;
     }
     
     .event-card {
@@ -54,64 +60,46 @@
     }
   </style>
 </head>
-<body class="min-h-screen flex flex-col">
-  <!-- Header -->
-  <header class="cosmic-header py-4 px-6 flex justify-between items-center">
-    <div class="flex items-center">
-      <div class="p-2 mr-3">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-        </svg>
-      </div>
-      <a href="/" class="text-2xl font-bold text-blue-900">DelightMate</a>
-    </div>
-    <nav class="flex space-x-4">
-      <a href="/" class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-blue-600">Home</a>
-      <a href="/email" class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-blue-600">Email</a>
-      <a href="/calendar" class="px-4 py-2 text-sm font-medium text-blue-600 border-b-2 border-blue-600">Calendar</a>
-    </nav>
-    <div class="flex items-center space-x-4">
-      {% if user and user.is_logged_in %}
-        <div class="flex items-center">
-          <span class="mr-3 text-gray-700">{{ user.name }}</span>
-          {% if user.picture %}
-            <img src="{{ user.picture }}" alt="Profile" class="w-10 h-10 rounded-full border-2 border-blue-200">
-          {% else %}
-            <div class="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold border-2 border-blue-200">
-              {{ user.name[0] if user.name else 'U' }}
-            </div>
-          {% endif %}
-        </div>
-      {% endif %}
-    </div>
-  </header>
+<body class="min-h-screen flex flex-col" style="background-color: var(--bg-color);">
+  {% include 'components/navbar.html' %}
 
-  <!-- Theme Toggle -->
-  <button class="theme-toggle" id="themeToggle">
-    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" id="themeIcon">
-      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" class="moon-icon"></path>
-      <circle cx="12" cy="12" r="5" class="sun-icon" style="display:none;"></circle>
-      <line x1="12" y1="1" x2="12" y2="3" class="sun-icon" style="display:none;"></line>
-      <line x1="12" y1="21" x2="12" y2="23" class="sun-icon" style="display:none;"></line>
-      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" class="sun-icon" style="display:none;"></line>
-      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" class="sun-icon" style="display:none;"></line>
-      <line x1="1" y1="12" x2="3" y2="12" class="sun-icon" style="display:none;"></line>
-      <line x1="21" y1="12" x2="23" y2="12" class="sun-icon" style="display:none;"></line>
-      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" class="sun-icon" style="display:none;"></line>
-      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" class="sun-icon" style="display:none;"></line>
-    </svg>
-  </button>
+
   
   <!-- Main Content -->
-  <main class="flex-grow container mx-auto px-4 py-8">
+  <main class="flex-grow container mx-auto px-4 py-8" style="margin-top: 75px;">
     <div class="mb-8 flex justify-between items-center">
       <h1 class="text-3xl font-bold">Your Calendar</h1>
-      <a href="https://calendar.google.com/calendar/u/0/r/week" target="_blank" class="control-btn px-4 py-2 flex items-center">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+      <div class="flex space-x-3">
+        <a href="https://calendar.google.com/calendar/u/0/r/week" target="_blank" class="control-btn px-4 py-2 flex items-center">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+          </svg>
+          Open in Google Calendar
+        </a>
+        <a href="https://calendar.google.com/calendar/u/0/r/eventedit" target="_blank" class="control-btn px-4 py-2 flex items-center">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+          </svg>
+          Add Event
+        </a>
+      </div>
+    </div>
+    
+    <!-- Calendar Navigation -->
+    <div class="mb-6 flex justify-between items-center">
+      <button class="control-btn flex items-center px-3 py-2">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
         </svg>
-        Open in Google Calendar
-      </a>
+        Previous Week
+      </button>
+      <div class="text-lg font-semibold">{{ now.strftime('%B %d') }} - {{ (now + datetime.timedelta(days=7)).strftime('%B %d, %Y') }}</div>
+      <button class="control-btn flex items-center px-3 py-2">
+        <span class="mr-1">Next Week</span>
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+        </svg>
+      </button>
     </div>
 
     <div class="mb-6 p-6 rounded-xl" style="background-color: var(--control-bg); border: 1px solid var(--circle-border); box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);">
@@ -170,51 +158,5 @@
   <footer class="cosmic-footer py-4 text-center">
     <p class="text-sm">&copy; 2025 DelightMate - Your Intelligent Assistant</p>
   </footer>
-  
-  <script>
-    document.addEventListener('DOMContentLoaded', function() {
-      const themeToggle = document.getElementById('themeToggle');
-      const themeIcon = document.getElementById('themeIcon');
-      const moonIcon = document.querySelector('.moon-icon');
-      const sunIcons = document.querySelectorAll('.sun-icon');
-      
-      // Initialize theme from localStorage
-      initTheme();
-      
-      // Theme toggle handler
-      themeToggle.addEventListener('click', function() {
-        toggleTheme();
-      });
-      
-      // Initialize theme
-      function initTheme() {
-        const savedTheme = localStorage.getItem('theme') || 'dark';
-        document.documentElement.setAttribute('data-theme', savedTheme);
-        updateThemeIcon(savedTheme);
-      }
-      
-      // Toggle between light and dark themes
-      function toggleTheme() {
-        const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
-        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-        
-        document.documentElement.setAttribute('data-theme', newTheme);
-        localStorage.setItem('theme', newTheme);
-        
-        updateThemeIcon(newTheme);
-      }
-      
-      // Update theme icon based on current theme
-      function updateThemeIcon(theme) {
-        if (theme === 'dark') {
-          moonIcon.style.display = 'block';
-          sunIcons.forEach(icon => icon.style.display = 'none');
-        } else {
-          moonIcon.style.display = 'none';
-          sunIcons.forEach(icon => icon.style.display = 'block');
-        }
-      }
-    });
-  </script>
 </body>
 </html>
