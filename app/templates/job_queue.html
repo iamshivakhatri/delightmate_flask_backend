@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Job Queue Simulator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+            background-color: #f2f2f2;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        form {
+            margin: 0 auto;
+            width: 50%;
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+        input[type="text"], select {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        #response {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 18px;
+            color: #555;
+        }
+    </style>
+</head>
+<body>
+    <h1>Enqueue Dummy Job</h1>
+
+    <form id="jobForm">
+        <label for="job_type">Job Type:</label>
+        <select id="job_type" name="job_type" required>
+            <option value="summarize">Summarize</option>
+            <option value="draft">Draft</option>
+        </select>
+
+        <label for="email_content">Email Content:</label>
+        <input type="text" id="email_content" name="email_content" required>
+
+        <button type="submit">Submit Job</button>
+    </form>
+
+    <div id="response"></div>
+
+    <script>
+        document.getElementById('jobForm').addEventListener('submit', async (event) => {
+            event.preventDefault();
+            
+            const formData = new FormData(event.target);
+            const response = await fetch('/enqueue_job', {
+                method: 'POST',
+                body: formData
+            });
+
+            const result = await response.json();
+            document.getElementById('response').innerText = result.message;
+        });
+    </script>
+</body>
+</html>
