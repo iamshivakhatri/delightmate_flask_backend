@@ -1,8 +1,21 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, session, request
 from dotenv import load_dotenv
 import os
-from extensions import redis_client
+from app.extensions import redis_client
 import json
+
+from app.utils.supabase import get_supabase_client
+import uuid
+from datetime import datetime
+import logging
+
+# Configure logging
+logger = logging.getLogger(__name__)
+
+# Setup logging
+logging.basicConfig(level=logging.INFO)
+
+
 
 
 
@@ -14,11 +27,18 @@ load_dotenv()
 # Initialize Flask app
 app = Flask(__name__, template_folder='templates')
 
-# Import routes
-from routes import voice, agent
+# Set a secret key for session management
+app.secret_key = os.environ.get('SECRET_KEY')
 
-app.register_blueprint(voice.bp)
-app.register_blueprint(agent.bp)
+# Import routes
+from app.routes.voice import bp as voice_bp
+from app.routes.agent import bp as agent_bp
+from app.routes.email import email_bp
+
+
+app.register_blueprint(voice_bp)
+app.register_blueprint(agent_bp)
+app.register_blueprint(email_bp)
 
 # Error handlers
 @app.errorhandler(404)
@@ -32,6 +52,8 @@ def server_error(error):
 # Home route
 @app.route('/')
 def home():
+    supabase = get_supabase_client()
+    
     return render_template('index.html')
 
 # Audio interface route
@@ -76,5 +98,5 @@ def enqueue_job():
 
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
+    port = int(os.environ.get("PORT", 5001))
     app.run(host="0.0.0.0", port=port, debug=True) 

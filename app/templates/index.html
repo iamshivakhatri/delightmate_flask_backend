@@ -3,107 +3,221 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DelightMate - AI Assistant Platform</title>
+    <title>DelightMate - Your Intelligent Assistant</title>
+    <link href="{{ url_for('static', filename='css/tailwind.css') }}" rel="stylesheet">
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            line-height: 1.6;
-            margin: 0;
-            padding: 0;
-            color: #333;
-            background-color: #f4f4f4;
+        @keyframes pulse-ring {
+            0% { transform: scale(0.8); opacity: 0.8; }
+            50% { transform: scale(1); opacity: 0.5; }
+            100% { transform: scale(0.8); opacity: 0.8; }
         }
-        .container {
-            width: 80%;
-            margin: 0 auto;
-            padding: 1rem;
+        @keyframes wave {
+            0% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+            100% { transform: translateY(0); }
         }
-        header {
-            background: #50b3a2;
-            color: white;
-            text-align: center;
-            padding: 1rem;
-            margin-bottom: 1rem;
+        .pulse-animation {
+            animation: pulse-ring 2s infinite;
         }
-        .card {
-            background: white;
-            padding: 2rem;
-            margin-bottom: 1rem;
-            border-radius: 5px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
-        h1, h2, h3 {
-            color: #333;
-        }
-        .api-endpoints {
-            margin-top: 2rem;
-        }
-        .endpoint {
-            border-left: 4px solid #50b3a2;
-            padding-left: 1rem;
-            margin-bottom: 1.5rem;
-        }
-        code {
-            background: #f8f8f8;
-            padding: 0.2rem;
-            border-radius: 3px;
-            font-family: monospace;
-        }
-        .cta-button {
+        .wave-animation > span {
             display: inline-block;
-            padding: 10px 20px;
-            background-color: #50b3a2;
-            color: white;
-            text-decoration: none;
-            border-radius: 5px;
-            font-weight: bold;
-            margin-top: 1rem;
+            animation: wave 1.2s infinite;
         }
-        .cta-button:hover {
-            background-color: #3a9c8c;
+        .wave-animation > span:nth-child(2) { animation-delay: 0.1s; }
+        .wave-animation > span:nth-child(3) { animation-delay: 0.2s; }
+        .wave-animation > span:nth-child(4) { animation-delay: 0.3s; }
+        .wave-animation > span:nth-child(5) { animation-delay: 0.4s; }
+        .chat-container {
+            height: 0;
+            overflow: hidden;
+            transition: height 0.3s ease-in-out;
+        }
+        .chat-container.active {
+            height: 300px;
         }
     </style>
 </head>
-<body>
-    <header>
-        <h1>DelightMate - AI Assistant Platform</h1>
-        <p>Your personal AI assistant powered by Flask</p>
+<body class="bg-blue-50 min-h-screen flex flex-col">
+    <!-- Header -->
+    <header class="py-4 px-6 bg-blue-900 text-white">
+        <div class="container mx-auto flex justify-between items-center">
+            <div class="flex items-center">
+                <div class="p-2 mr-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-blue-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                </div>
+                <h1 class="text-2xl font-bold">DelightMate</h1>
+            </div>
+            <nav class="flex space-x-2">
+                <a href="/" class="px-4 py-2 text-sm font-medium text-white hover:text-blue-200 focus:outline-none">Home</a>
+                <a href="/email" class="px-4 py-2 text-sm font-medium text-white hover:text-blue-200 focus:outline-none">Email</a>
+                <a href="#" class="px-4 py-2 text-sm font-medium text-blue-300 opacity-50 cursor-not-allowed" title="Coming soon">Calendar</a>
+            </nav>
+        </div>
     </header>
-    
-    <div class="container">
-        <div class="card">
-            <h2>Welcome to DelightMate</h2>
-            <p>
-                DelightMate is an AI assistant platform built with Flask. It provides voice interaction tools and 
-                AI agent capabilities.
-            </p>
-            <a href="/audio" class="cta-button">Try Voice Interface</a>
+
+    <!-- Main Content -->
+    <main class="flex-grow flex flex-col items-center justify-center p-4">
+        <div class="max-w-3xl w-full mx-auto text-center mb-4">
+            <h2 class="text-3xl font-bold text-blue-900 mb-2">Your Intelligent AI Assistant</h2>
+            <p class="text-blue-800 mb-6">DelightMate helps you manage your digital life with voice commands, email management, and more.</p>
         </div>
-        
-        <div class="api-endpoints card">
-            <h2>API Endpoints</h2>
-            
-            <div class="endpoint">
-                <h3>Speech to Text</h3>
-                <p><code>POST /api/stt</code></p>
-                <p>Convert audio to text using OpenAI Whisper.</p>
-                <p>Send a <code>multipart/form-data</code> request with an audio file.</p>
-            </div>
-            
-            <div class="endpoint">
-                <h3>Text to Speech</h3>
-                <p><code>POST /api/tts</code></p>
-                <p>Convert text to speech using ElevenLabs.</p>
-                <p>Send a JSON payload with a <code>"text"</code> field.</p>
-            </div>
-            
-            <div class="endpoint">
-                <h3>AI Agent</h3>
-                <p><code>POST /api/agent</code></p>
-                <p>Interact with the GPT-4 powered agent.</p>
-                <p>Send a JSON payload with a <code>"transcript"</code> field.</p>
+
+        <!-- Voice Assistant Circle Button -->
+        <div class="relative mb-10 flex flex-col items-center">
+            <div id="outer-ring" class="absolute w-52 h-52 rounded-full bg-blue-600 opacity-20 pulse-animation"></div>
+            <button id="voice-button" class="relative z-10 w-40 h-40 rounded-full bg-gradient-to-br from-blue-700 to-blue-900 shadow-lg flex items-center justify-center focus:outline-none transform hover:scale-105 transition-transform">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+                </svg>
+            </button>
+            <div id="voice-status" class="mt-4 text-blue-800 font-medium hidden wave-animation">
+                <span>L</span><span>i</span><span>s</span><span>t</span><span>e</span><span>n</span><span>i</span><span>n</span><span>g</span><span>.</span><span>.</span><span>.</span>
             </div>
         </div>
-    </div>
+
+        <!-- Chat Interface -->
+        <div id="chat-container" class="chat-container w-full max-w-2xl mx-auto bg-white rounded-xl shadow-md overflow-hidden">
+            <div id="chat-messages" class="h-60 overflow-y-auto p-4 space-y-4">
+                <div class="flex items-start">
+                    <div class="flex-shrink-0 bg-blue-700 rounded-full p-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        </svg>
+                    </div>
+                    <div class="ml-3 bg-blue-100 rounded-lg p-3">
+                        <p class="text-sm text-blue-900">Hi there! I'm DelightMate. How can I help you today?</p>
+                    </div>
+                </div>
+            </div>
+            <div class="border-t border-gray-200 p-4">
+                <form id="chat-form" class="flex">
+                    <input type="text" id="chat-input" class="flex-grow px-4 py-2 border border-gray-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Type your message...">
+                    <button type="submit" class="px-4 py-2 bg-blue-700 text-white rounded-r-lg hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                        </svg>
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Quick Access Cards -->
+        <div class="w-full max-w-3xl mx-auto mt-8 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <a href="/email" class="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow flex items-center">
+                <div class="w-12 h-12 bg-blue-700 rounded-full flex items-center justify-center flex-shrink-0">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                    </svg>
+                </div>
+                <div class="ml-4">
+                    <h3 class="text-lg font-medium text-blue-900">Email Integration</h3>
+                    <p class="text-blue-800">Connect your Gmail account</p>
+                </div>
+            </a>
+            <div class="bg-white rounded-xl p-6 shadow-sm opacity-75">
+                <div class="w-12 h-12 bg-blue-200 rounded-full flex items-center justify-center flex-shrink-0">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                </div>
+                <div class="ml-4">
+                    <h3 class="text-lg font-medium text-blue-900">Calendar Management</h3>
+                    <p class="text-blue-800">Coming soon</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="py-4 text-center text-blue-800 mt-auto">
+        <p class="text-sm">&copy; 2025 DelightMate - Your Intelligent Assistant</p>
+    </footer>
+
+    <!-- JavaScript -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const voiceButton = document.getElementById('voice-button');
+            const voiceStatus = document.getElementById('voice-status');
+            const outerRing = document.getElementById('outer-ring');
+            const chatContainer = document.getElementById('chat-container');
+            const chatMessages = document.getElementById('chat-messages');
+            const chatForm = document.getElementById('chat-form');
+            const chatInput = document.getElementById('chat-input');
+            let isListening = false;
+
+            // Function to toggle voice assistant
+            voiceButton.addEventListener('click', function() {
+                if (isListening) {
+                    // Stop listening
+                    voiceStatus.classList.add('hidden');
+                    outerRing.classList.add('pulse-animation');
+                    isListening = false;
+                    
+                    // Show chat interface
+                    chatContainer.classList.add('active');
+                    addMessage('user', 'Voice input captured...');
+                    setTimeout(() => {
+                        addMessage('assistant', 'I heard you! How can I help you today?');
+                    }, 1000);
+                } else {
+                    // Start listening
+                    voiceStatus.classList.remove('hidden');
+                    outerRing.classList.remove('pulse-animation');
+                    isListening = true;
+                    
+                    // Simulate voice recognition (in a real app, you would use the Web Speech API)
+                    setTimeout(() => {
+                        voiceButton.click(); // Simulate finishing voice input
+                    }, 3000);
+                }
+            });
+
+            // Function to handle chat form submission
+            chatForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const message = chatInput.value.trim();
+                if (message) {
+                    addMessage('user', message);
+                    chatInput.value = '';
+                    
+                    // Simulate response (in a real app, this would call your API)
+                    setTimeout(() => {
+                        addMessage('assistant', 'I received your message: "' + message + '". How can I help you further?');
+                    }, 1000);
+                }
+            });
+
+            // Function to add a message to the chat
+            function addMessage(sender, text) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'flex items-start';
+                
+                if (sender === 'assistant') {
+                    messageDiv.innerHTML = `
+                        <div class="flex-shrink-0 bg-blue-700 rounded-full p-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                            </svg>
+                        </div>
+                        <div class="ml-3 bg-blue-100 rounded-lg p-3">
+                            <p class="text-sm text-blue-900">${text}</p>
+                        </div>
+                    `;
+                } else {
+                    messageDiv.innerHTML = `
+                        <div class="ml-auto"></div>
+                        <div class="mr-3 bg-blue-700 text-white rounded-lg p-3">
+                            <p class="text-sm">${text}</p>
+                        </div>
+                    `;
+                }
+                
+                chatMessages.appendChild(messageDiv);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }
+        });
+    </script>
 </body>
-</html> 
+</html>

@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify, Response
-from services.whisper import transcribe_audio
-from services.elevenlabs import generate_speech
-from utils.helpers import error_response
+from app.services.whisper import transcribe_audio
+from app.services.elevenlabs import generate_speech
+from app.utils.helpers import error_response
 import io
 
 bp = Blueprint('voice', __name__, url_prefix='/api')

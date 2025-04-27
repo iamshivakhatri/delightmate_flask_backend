@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Connect Your Gmail</title>
+  <link href="{{ url_for('static', filename='css/tailwind.css') }}" rel="stylesheet">
+</head>
+<body class="bg-gray-50 flex items-center justify-center min-h-screen">
+  <div class="text-center">
+    <h1 class="text-4xl font-bold mb-6">Connect Your Gmail</h1>
+    <p class="mb-8 text-gray-600">Authorize access to manage your emails with DelightMate.</p>
+    <a href="{{ url_for('email.email_login') }}" class="px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700">
+      Login with Google
+    </a>
+  </div>
+</body>
+</html>

@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
-from services.chat_agent import process_message
-from utils.helpers import error_response
+from app.services.chat_agent import process_message
+from app.utils.helpers import error_response
 
 bp = Blueprint('agent', __name__, url_prefix='/api')
 
