@@ -89,68 +89,178 @@
             const micButton = document.getElementById('micButton');
             const messageContainer = document.getElementById('messageContainer');
             const responseMessage = document.getElementById('responseMessage');
-            let isListening = false;
-            let mediaRecorder = null;
-            let audioChunks = [];
-            let isProcessing = false;
+            
+            // Create a dedicated state management object similar to audio_recorder.html
+            const AppState = {
+                // Recording state
+                isRecording: false,
+                isProcessing: false,
+                pauseDetected: false,
+                silenceStart: null,
+                hasDetectedAudio: false,
+                significantSpeechDetected: false,
+                isListening: false,
+                
+                // Audio resources
+                mediaRecorder: null,
+                audioChunks: [],
+                audioBlob: null,
+                audioContext: null,
+                analyser: null,
+                source: null,
+                
+                // Timers and tracking
+                continuousRecordingTimer: null,
+                lastProcessedTime: 0,
+                
+                // Debug
+                logPrefix: '🎤 VoiceUI:',
+                
+                // Methods for real-time conversation
+                resetAudioState() {
+                    this.isRecording = false;
+                    this.isProcessing = false;
+                    this.pauseDetected = false;
+                    this.silenceStart = null;
+                    this.hasDetectedAudio = false;
+                    this.significantSpeechDetected = false;
+                    this.audioChunks = [];
+                    console.log(`${this.logPrefix} Audio state reset`);
+                },
+                
+                debug() {
+                    console.log(`${this.logPrefix} State: Recording: ${this.isRecording}, Processing: ${this.isProcessing}, Active: ${this.isListening}`);
+                }
+            };
             
             // Create cosmic particles
             createCosmicParticles();
             
-            // Microphone button click handler
+            // Microphone button click handler - modified for real-time conversation
             micButton.addEventListener('click', function() {
-                if (isProcessing) return; // Prevent multiple clicks during processing
+                if (AppState.isProcessing) return; // Prevent multiple clicks during processing
                 
-                if (isListening) {
+                if (AppState.isListening) {
                     stopRecording();
+                    // Change microphone icon to original icon when stopping
+                    micButton.innerHTML = `
+                        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                            <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                            <line x1="12" y1="19" x2="12" y2="23"></line>
+                            <line x1="8" y1="23" x2="16" y2="23"></line>
+                        </svg>
+                    `;
                 } else {
                     startRecording();
+                    // Change microphone icon to stop icon when recording
+                    micButton.innerHTML = `
+                        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="6" y="6" width="12" height="12" rx="2" ry="2"></rect>
+                        </svg>
+                    `;
+                    micButton.classList.add('recording');
                 }
             });
             
-            // Initialize audio recording capabilities
+            // Configuration settings for voice assistant
+            const settings = {
+                silenceThreshold: 15,  // Volume level below which is considered silence
+                significantAudioThreshold: 25, // Threshold for significant speech detection
+                pauseThreshold: 1.5,   // Seconds of silence before processing
+                minAudioSize: 1000,    // Minimum audio blob size to process
+                continuousMode: true,  // Whether to automatically resume recording
+                echoCancel: true,      // Whether to use echo cancellation
+                noiseSuppress: true    // Whether to use noise suppression
+            };
+
+            // Initialize audio recording capabilities with continuous mode
             async function startRecording() {
+                if (AppState.isRecording) {
+                    console.log(`${AppState.logPrefix} Already recording, not starting again`);
+                    return;
+                }
+                
+                console.log(`${AppState.logPrefix} Starting recording...`);
+                AppState.debug();
+                
+                // Reset state variables
+                AppState.isRecording = true;
+                AppState.isListening = true;
+                AppState.pauseDetected = false;
+                AppState.silenceStart = null;
+                AppState.hasDetectedAudio = false;
+                AppState.significantSpeechDetected = false;
+                AppState.audioChunks = [];
+                
                 try {
-                    // Request microphone access
-                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    // Request microphone access with constraints for better quality
+                    const constraints = {
+                        audio: {
+                            echoCancellation: settings.echoCancel,
+                            noiseSuppression: settings.noiseSuppress,
+                            autoGainControl: true
+                        }
+                    };
+                    
+                    statusText.textContent = "Accessing microphone...";
+                    const stream = await navigator.mediaDevices.getUserMedia(constraints);
                     
                     // Start animation
                     startListening();
                     
-                    // Hide welcome message
-                    const welcomeMessage = document.getElementById('welcomeMessage');
-                    if (welcomeMessage) {
-                        welcomeMessage.style.opacity = '0';
-                        welcomeMessage.style.transform = 'translateY(-50px)';
+                    // Initialize audio context for visualization and volume monitoring
+                    AppState.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    AppState.analyser = AppState.audioContext.createAnalyser();
+                    AppState.analyser.fftSize = 256;
+                    
+                    // Start media recorder with higher bitrate for better quality
+                    const options = { mimeType: 'audio/webm;codecs=opus', audioBitsPerSecond: 128000 };
+                    AppState.mediaRecorder = new MediaRecorder(stream, options);
+                    
+                    // Set up audio analysis for silence detection
+                    AppState.source = AppState.audioContext.createMediaStreamSource(stream);
+                    AppState.source.connect(AppState.analyser);
+                    
+                    // Start monitoring volume for silence detection
+                    monitorVolume();
+                    
+                    // Add event listeners for audio data
+                    AppState.mediaRecorder.addEventListener('dataavailable', event => {
+                        if (event.data.size > 0) {
+                            AppState.audioChunks.push(event.data);
+                        }
+                    });
+                    
+                    // When recording stops, process the audio
+                    AppState.mediaRecorder.addEventListener('stop', () => {
+                        console.log(`${AppState.logPrefix} MediaRecorder stopped, chunks: ${AppState.audioChunks.length}`);
+                        if (AppState.audioChunks.length > 0) {
+                            AppState.audioBlob = new Blob(AppState.audioChunks, { type: 'audio/webm;codecs=opus' });
+                            console.log(`${AppState.logPrefix} Audio blob created, size: ${AppState.audioBlob.size}`);
+                            if (!AppState.isProcessing) {
+                                processAudio();
+                            }
+                        }
+                    });
+                    
+                    // Start recording in chunks of 100ms
+                    AppState.mediaRecorder.start(100);
+                    statusText.textContent = "Listening...";
+                    
+                    // Start continuous recording timer if enabled
+                    if (settings.continuousMode) {
+                        startContinuousRecordingTimer();
                     }
-                    
-                    // Setup audio context for visualization
-                    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                    const analyser = audioContext.createAnalyser();
-                    const microphone = audioContext.createMediaStreamSource(stream);
-                    microphone.connect(analyser);
-                    analyser.fftSize = 256;
-                    const bufferLength = analyser.frequencyBinCount;
-                    const dataArray = new Uint8Array(bufferLength);
-                    
-                    // Setup media recorder
-                    mediaRecorder = new MediaRecorder(stream);
-                    audioChunks = [];
-                    
-                    mediaRecorder.ondataavailable = (event) => {
-                        audioChunks.push(event.data);
-                    };
-                    
-                    mediaRecorder.onstop = processAudio;
-                    
-                    // Start recording
-                    mediaRecorder.start();
                     
                     // Setup visualization animation
                     function animate() {
-                        if (!isListening) return;
+                        if (!AppState.isListening) return;
                         
-                        analyser.getByteFrequencyData(dataArray);
+                        const bufferLength = AppState.analyser.frequencyBinCount;
+                        const dataArray = new Uint8Array(bufferLength);
+                        AppState.analyser.getByteFrequencyData(dataArray);
+                        
                         // Calculate average volume
                         let sum = 0;
                         for (let i = 0; i < bufferLength; i++) {
@@ -176,18 +286,47 @@
                     animate();
                     
                 } catch (err) {
-                    console.error('Error accessing microphone:', err);
+                    console.error(`${AppState.logPrefix} Error accessing microphone:`, err);
                     alert('Error accessing microphone. Please ensure your microphone is connected and permissions are granted.');
+                    
+                    // Reset state on error
+                    AppState.isRecording = false;
+                    AppState.isListening = false;
                 }
             }
             
-            function stopRecording() {
-                if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-                    isProcessing = true;
-                    statusText.textContent = 'Processing...';
-                    mediaRecorder.stop();
-                    stopListening();
+            // Function to start continuous recording timer
+            function startContinuousRecordingTimer() {
+                // Clear any existing timer
+                if (AppState.continuousRecordingTimer) {
+                    clearInterval(AppState.continuousRecordingTimer);
+                    AppState.continuousRecordingTimer = null;
                 }
+                
+                console.log(`${AppState.logPrefix} Continuous listening mode active - will process on speech followed by silence`);
+            }
+            
+            // Stop recording function
+            function stopRecording() {
+                console.log(`${AppState.logPrefix} Stopping recording`);
+                
+                // Only stop if we have an active recorder
+                if (AppState.mediaRecorder && AppState.mediaRecorder.state !== 'inactive') {
+                    AppState.mediaRecorder.stop();
+                    AppState.mediaRecorder.stream.getTracks().forEach(track => track.stop());
+                }
+                
+                AppState.isRecording = false;
+                AppState.isListening = false;
+                micButton.classList.remove('recording');
+                
+                // Clear continuous recording timer
+                if (AppState.continuousRecordingTimer) {
+                    clearInterval(AppState.continuousRecordingTimer);
+                    AppState.continuousRecordingTimer = null;
+                }
+                
+                stopListening();
             }
             
             async function processAudio() {
@@ -206,6 +345,8 @@
                     });
                     
                     const data = await response.json();
+
+                    console.log('Backend response from stt:', data);
                     
                     if (data.success) {
                         // Process the transcript
@@ -222,12 +363,12 @@
                         statusText.textContent = 'Thinking...';
                         
                         // Now get AI response for the transcript
-                        const aiResponse = await fetch('/api/chat', {
+                        const aiResponse = await fetch('/api/tts', {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json'
                             },
-                            body: JSON.stringify({ message: transcript })
+                            body: JSON.stringify({ text: transcript })
                         });
                         
                         const aiData = await aiResponse.json();
@@ -271,6 +412,314 @@
                     }
                 } catch (err) {
                     console.error('Error with text-to-speech:', err);
+                }
+            }
+            
+            // Monitor volume and detect silence
+            function monitorVolume() {
+                if (!AppState.analyser || !AppState.isRecording) {
+                    console.log(`${AppState.logPrefix} Cannot monitor volume - analyser or recording state invalid`);
+                    return;
+                }
+                
+                const bufferLength = AppState.analyser.frequencyBinCount;
+                const volumeData = new Uint8Array(bufferLength);
+                AppState.analyser.getByteFrequencyData(volumeData);
+                
+                // Calculate average volume level
+                let sum = 0;
+                for (let i = 0; i < bufferLength; i++) {
+                    sum += volumeData[i];
+                }
+                const avg = sum / bufferLength;
+                
+                // Check if we've detected significant speech
+                if (avg > settings.significantAudioThreshold) {
+                    if (!AppState.significantSpeechDetected) {
+                        console.log(`${AppState.logPrefix} Speech detected - volume level: ${avg.toFixed(1)}`);
+                    }
+                    AppState.significantSpeechDetected = true;
+                    // Reset silence start when speech is detected
+                    AppState.silenceStart = null;
+                }
+                
+                // Regular audio detection for visualization
+                if (avg > settings.silenceThreshold) {
+                    AppState.hasDetectedAudio = true;
+                }
+                
+                // Silence detection logic - only trigger processing if we had significant speech followed by silence
+                if (AppState.significantSpeechDetected) {
+                    if (avg < settings.silenceThreshold) {
+                        // Start silence timer if not already started
+                        if (!AppState.silenceStart) {
+                            AppState.silenceStart = Date.now();
+                            console.log(`${AppState.logPrefix} Silence started after speech`);
+                        }
+                        
+                        // Check if silence has lasted long enough to be a pause
+                        const silenceDuration = (Date.now() - AppState.silenceStart) / 1000;
+                        
+                        // Only process when:
+                        // 1. We've detected significant speech
+                        // 2. Followed by silence for the pause threshold duration
+                        // 3. We're not already processing
+                        // 4. Enough time has passed since last processing
+                        if (silenceDuration > settings.pauseThreshold && !AppState.pauseDetected && !AppState.isProcessing &&
+                            (Date.now() - AppState.lastProcessedTime > 3000)) {
+                            
+                            console.log(`${AppState.logPrefix} Processing after ${silenceDuration.toFixed(1)}s of silence following speech`);
+                            AppState.pauseDetected = true;
+                            pauseAndProcess();
+                        }
+                    } else {
+                        // Reset silence timer if sound detected
+                        if (AppState.silenceStart) {
+                            console.log(`${AppState.logPrefix} Silence interrupted - continuing to listen`);
+                        }
+                        AppState.silenceStart = null;
+                    }
+                }
+                
+                // Continue monitoring as long as we're recording
+                if (AppState.isRecording) {
+                    requestAnimationFrame(monitorVolume);
+                } else {
+                    console.log(`${AppState.logPrefix} Volume monitoring stopped - recording ended`);
+                }
+            }
+            
+            // Pause recording and process current audio
+            function pauseAndProcess() {
+                console.log(`${AppState.logPrefix} Pausing to process audio`);
+                
+                if (!AppState.isRecording || AppState.isProcessing) {
+                    console.log(`${AppState.logPrefix} Cannot pause - not recording or already processing`);
+                    return;
+                }
+                
+                // Stop the current recorder to get the data
+                const currentMediaRecorder = AppState.mediaRecorder;
+                currentMediaRecorder.stop();
+                
+                statusText.textContent = "Processing your message...";
+                
+                // Update state
+                AppState.isRecording = false;
+                
+                // Store the callback on the window object so it can be accessed from anywhere
+                window.resumeRecordingCallback = resumeRecording;
+            }
+            
+            // Resume recording function for continuous conversation
+            const resumeRecording = async () => {
+                console.log(`${AppState.logPrefix} Resuming recording callback triggered`);
+                
+                // Check if still in listening mode
+                if (AppState.isListening) {
+                    console.log(`${AppState.logPrefix} Resuming recording - still active`);
+                    
+                    try {
+                        // Reset AppState for a fresh start with the new recording session
+                        AppState.isRecording = false;
+                        AppState.isProcessing = false;
+                        AppState.significantSpeechDetected = false;
+                        AppState.pauseDetected = false;
+                        AppState.silenceStart = null;
+                        AppState.audioChunks = [];
+                        
+                        // Request a fresh microphone stream
+                        const constraints = {
+                            audio: {
+                                echoCancellation: settings.echoCancel,
+                                noiseSuppression: settings.noiseSuppress,
+                                autoGainControl: true
+                            }
+                        };
+                        
+                        console.log(`${AppState.logPrefix} Requesting fresh microphone stream`);
+                        const stream = await navigator.mediaDevices.getUserMedia(constraints);
+                        
+                        // Start a new recorder with the fresh stream
+                        const options = { mimeType: 'audio/webm;codecs=opus', audioBitsPerSecond: 128000 };
+                        AppState.mediaRecorder = new MediaRecorder(stream, options);
+                        
+                        // Set up event handlers again
+                        AppState.mediaRecorder.addEventListener('dataavailable', event => {
+                            if (event.data.size > 0) {
+                                AppState.audioChunks.push(event.data);
+                            }
+                        });
+                        
+                        AppState.mediaRecorder.addEventListener('stop', () => {
+                            if (AppState.audioChunks.length > 0) {
+                                AppState.audioBlob = new Blob(AppState.audioChunks, { type: 'audio/webm;codecs=opus' });
+                                if (!AppState.isProcessing) {
+                                    processAudio();
+                                }
+                            }
+                        });
+                        
+                        // Set up audio analysis again with the fresh stream
+                        if (AppState.audioContext && AppState.analyser) {
+                            // Disconnect previous source if exists
+                            if (AppState.source) {
+                                AppState.source.disconnect();
+                            }
+                            
+                            AppState.source = AppState.audioContext.createMediaStreamSource(stream);
+                            AppState.source.connect(AppState.analyser);
+                            
+                            // Start recording first, then visualization
+                            AppState.mediaRecorder.start(100);
+                            AppState.isRecording = true;
+                            
+                            // Start monitoring volume with the fresh stream
+                            setTimeout(() => {
+                                console.log(`${AppState.logPrefix} Starting volume monitoring`);
+                                monitorVolume();
+                            }, 100);
+                        } else {
+                            throw new Error("Audio context or analyser not properly initialized");
+                        }
+                        
+                        statusText.textContent = "Listening...";
+                        console.log(`${AppState.logPrefix} Successfully restarted recording with fresh stream`);
+                        
+                    } catch (error) {
+                        console.error(`${AppState.logPrefix} Error resuming recording:`, error);
+                        statusText.textContent = "Error resuming: " + error.message;
+                    }
+                } else {
+                    console.log(`${AppState.logPrefix} Not resuming recording - conversation has ended`);
+                }
+            };
+            
+            // Process audio function
+            async function processAudio() {
+                if (!AppState.audioBlob || AppState.audioBlob.size === 0 || AppState.isProcessing) {
+                    console.log(`${AppState.logPrefix} Cannot process audio - no blob, empty blob, or already processing`);
+                    return;
+                }
+                
+                AppState.isProcessing = true;
+                AppState.lastProcessedTime = Date.now();
+                console.log(`${AppState.logPrefix} Processing audio blob of size: ${AppState.audioBlob.size} bytes`);
+                
+                // Skip processing if the audio is too small to contain meaningful speech
+                if (AppState.audioBlob.size < settings.minAudioSize) {
+                    console.log(`${AppState.logPrefix} Audio too small to contain speech, skipping processing`);
+                    AppState.isProcessing = false;
+                    
+                    if (window.resumeRecordingCallback && settings.continuousMode) {
+                        window.resumeRecordingCallback();
+                    }
+                    return;
+                }
+                
+                // Create FormData with the audio blob
+                const formData = new FormData();
+                formData.append('audio', AppState.audioBlob);
+                
+                try {
+                    statusText.textContent = 'Converting speech to text...';
+                    console.log(`${AppState.logPrefix} Sending audio to STT API`);
+                    
+                    const response = await fetch('/api/stt', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error(`STT server error: ${response.status}`);
+                    }
+                    
+                    const data = await response.json();
+                    if (!data.success) {
+                        throw new Error(data.error || 'Failed to transcribe audio');
+                    }
+                    
+                    const transcript = data.transcript;
+                    console.log(`${AppState.logPrefix} Received transcript: "${transcript}"`);
+                    
+                    // If no transcript was detected, skip processing
+                    if (!transcript || transcript.trim() === '') {
+                        // Silently resume recording without any messages about no speech
+                        console.log(`${AppState.logPrefix} No speech detected in transcription`);
+                        AppState.isProcessing = false;
+                        if (window.resumeRecordingCallback && settings.continuousMode) {
+                            window.resumeRecordingCallback();
+                        }
+                        return;
+                    }
+                    
+                    // Send transcript to AI for processing
+                    statusText.textContent = 'Getting AI response...';
+                    const aiResponse = await fetch('/api/agent', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            transcript: transcript,
+                            system_prompt: 'You are a helpful assistant.'
+                        })
+                    });
+                    
+                    if (!aiResponse.ok) {
+                        throw new Error(`Agent server error: ${aiResponse.status}`);
+                    }
+                    
+                    const aiData = await aiResponse.json();
+                    if (!aiData.success) {
+                        throw new Error(aiData.error || 'Failed to get AI response');
+                    }
+                    
+                    // Display and speak AI response
+                    simulateResponse(aiData.response);
+                    await speakResponse(aiData.response);
+                    
+                    // After processing is complete, resume recording if in continuous mode
+                    if (settings.continuousMode && window.resumeRecordingCallback) {
+                        window.resumeRecordingCallback();
+                    }
+                    
+                } catch (error) {
+                    console.error(`${AppState.logPrefix} Error:`, error);
+                    statusText.textContent = 'Error: ' + error.message;
+                    
+                    // Resume listening after error
+                    setTimeout(() => {
+                        if (settings.continuousMode && window.resumeRecordingCallback) {
+                            window.resumeRecordingCallback();
+                        }
+                    }, 2000);
+                } finally {
+                    AppState.isProcessing = false;
+                    AppState.pauseDetected = false;
+                }
+            }
+            
+            async function speakResponse(text) {
+                try {
+                    const response = await fetch('/api/tts', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ text: text })
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error('Failed to convert text to speech');
+                    }
+                    
+                    const blob = await response.blob();
+                    const audioURL = URL.createObjectURL(blob);
+                    const audio = new Audio(audioURL);
+                    audio.play();
+                } catch (error) {
+                    console.error('TTS Error:', error);
                 }
             }
             

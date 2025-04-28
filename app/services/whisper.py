@@ -121,7 +121,7 @@ def transcribe_audio(audio_file):
                 prompt="This is a conversation with a voice assistant."
             )
         
-        transcription = response.text  # <-- DIFFERENCE: .text needed!
+        transcription = response
         logger.info(f"Transcription successful: {transcription[:50]}...")
         return transcription
 
