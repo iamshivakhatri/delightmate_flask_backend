@@ -19,6 +19,8 @@ document.addEventListener('DOMContentLoaded', function() {
     function initTheme() {
         const savedTheme = localStorage.getItem('theme') || 'dark';
         document.documentElement.setAttribute('data-theme', savedTheme);
+        document.body.style.backgroundColor = 'var(--bg-color)';
+        document.body.style.color = 'var(--text-color)';
         updateThemeIcon(savedTheme);
     }
     
@@ -28,6 +30,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
         
         document.documentElement.setAttribute('data-theme', newTheme);
+        document.body.style.backgroundColor = 'var(--bg-color)';
+        document.body.style.color = 'var(--text-color)';
         localStorage.setItem('theme', newTheme);
         
         updateThemeIcon(newTheme);
@@ -35,7 +39,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Update theme icon based on current theme
     function updateThemeIcon(theme) {
-        if (!moonIcon || !sunIcons) return;
+        if (!moonIcon || !sunIcons.length) return;
         
         if (theme === 'dark') {
             moonIcon.style.display = 'block';
