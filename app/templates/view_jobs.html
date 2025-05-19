@@ -1,97 +1,132 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <title>Job Queue Monitor</title>
+    <link href="{{ url_for('static', filename='css/cosmic.css') }}" rel="stylesheet">
+    <script src="{{ url_for('static', filename='js/theme.js') }}"></script>
     <style>
+        :root {
+            --table-bg: var(--control-bg);
+            --table-header-bg: var(--accent-color);
+            --table-border: var(--circle-border);
+            --table-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+        
+        [data-theme="light"] {
+            --table-bg: rgba(255, 255, 255, 0.9);
+            --table-header-bg: rgba(25, 119, 210, 0.8);
+            --table-border: rgba(25, 119, 210, 0.3);
+            --table-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        
         body {
-            font-family: Arial, sans-serif;
-            background: #f9f9f9;
+            font-family: 'Arial', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
             padding: 20px;
+            transition: background-color 0.5s ease, color 0.5s ease;
         }
-        h1 {
+        
+        h1, h2 {
             text-align: center;
+            color: var(--text-color);
         }
+        
         .section {
             margin-bottom: 50px;
         }
+        
         table {
             margin: 0 auto;
             width: 80%;
-            background: white;
+            background: var(--table-bg);
             border-collapse: collapse;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            box-shadow: var(--table-shadow);
+            border-radius: 8px;
+            overflow: hidden;
         }
+        
         th, td {
             padding: 12px;
-            border-bottom: 1px solid #ddd;
+            border-bottom: 1px solid var(--table-border);
             text-align: left;
         }
+        
         th {
-            background-color: #4CAF50;
+            background-color: var(--table-header-bg);
             color: white;
+        }
+        
+        tr:hover {
+            background-color: rgba(64, 190, 255, 0.05);
+        }
+        
+        [data-theme="light"] tr:hover {
+            background-color: rgba(25, 119, 210, 0.05);
         }
     </style>
 </head>
 <body>
+    {% include 'components/navbar.html' %}
 
-<h1>Live Job Queue Monitor</h1>
+    <h1>Live Job Queue Monitor</h1>
 
-<div class="section">
-    <h2>Pending Jobs</h2>
-    {% if pending_jobs %}
-    <table>
-        <thead>
-            <tr>
-                <th>Job Type</th>
-                <th>Email Content</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for job in pending_jobs %}
-            <tr>
-                <td>{{ job.type }}</td>
-                <td>{{ job.content }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-    {% else %}
-    <p style="text-align:center;">No pending jobs.</p>
-    {% endif %}
-</div>
+    <div class="section">
+        <h2>Pending Jobs</h2>
+        {% if pending_jobs %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Job Type</th>
+                    <th>Email Content</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for job in pending_jobs %}
+                <tr>
+                    <td>{{ job.type }}</td>
+                    <td>{{ job.content }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p style="text-align:center;">No pending jobs.</p>
+        {% endif %}
+    </div>
 
-<div class="section">
-    <h2>Completed Jobs</h2>
-    {% if completed_jobs %}
-    <table>
-        <thead>
-            <tr>
-                <th>Job Type</th>
-                <th>Email Content</th>
-                <th>Result</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for job in completed_jobs %}
-            <tr>
-                <td>{{ job.original_job.type }}</td>
-                <td>{{ job.original_job.content }}</td>
-                <td>{{ job.result }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-    {% else %}
-    <p style="text-align:center;">No completed jobs yet.</p>
-    {% endif %}
-</div>
+    <div class="section">
+        <h2>Completed Jobs</h2>
+        {% if completed_jobs %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Job Type</th>
+                    <th>Email Content</th>
+                    <th>Result</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for job in completed_jobs %}
+                <tr>
+                    <td>{{ job.original_job.type }}</td>
+                    <td>{{ job.original_job.content }}</td>
+                    <td>{{ job.result }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p style="text-align:center;">No completed jobs yet.</p>
+        {% endif %}
+    </div>
 
-<script>
-    setInterval(() => {
-        window.location.reload();
-    }, 5000); // Refresh page every 5 seconds
-</script>
+    <script>
+        setInterval(() => {
+            window.location.reload();
+        }, 5000); // Refresh page every 5 seconds
+    </script>
 
 </body>
 </html>

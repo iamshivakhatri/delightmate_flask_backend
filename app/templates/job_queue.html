@@ -1,59 +1,106 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <title>Job Queue Simulator</title>
+    <link href="{{ url_for('static', filename='css/cosmic.css') }}" rel="stylesheet">
+    <script src="{{ url_for('static', filename='js/theme.js') }}"></script>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 40px;
-            background-color: #f2f2f2;
+        :root {
+            --form-bg: var(--control-bg);
+            --form-border: var(--circle-border);
+            --form-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            --input-bg: rgba(0, 0, 0, 0.1);
+            --input-border: var(--circle-border);
+            --button-bg: var(--accent-color);
+            --button-hover-bg: rgba(64, 190, 255, 0.9);
         }
+        
+        [data-theme="light"] {
+            --form-bg: rgba(255, 255, 255, 0.9);
+            --form-border: rgba(25, 119, 210, 0.2);
+            --form-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            --input-bg: rgba(240, 240, 240, 0.8);
+            --input-border: rgba(25, 119, 210, 0.2);
+            --button-bg: rgba(25, 119, 210, 0.8);
+            --button-hover-bg: rgba(25, 119, 210, 0.9);
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 40px;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            transition: background-color 0.5s ease, color 0.5s ease;
+        }
+        
         h1 {
             text-align: center;
-            color: #333;
+            color: var(--text-color);
         }
+        
         form {
             margin: 0 auto;
             width: 50%;
-            background: white;
+            background: var(--form-bg);
             padding: 30px;
-            border-radius: 8px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            border-radius: 12px;
+            box-shadow: var(--form-shadow);
+            border: 1px solid var(--form-border);
         }
+        
         label {
             display: block;
             margin-bottom: 10px;
             font-weight: bold;
+            color: var(--text-color);
         }
+        
         input[type="text"], select {
             width: 100%;
             padding: 10px;
             margin-bottom: 20px;
-            border-radius: 4px;
-            border: 1px solid #ccc;
+            border-radius: 8px;
+            border: 1px solid var(--input-border);
+            background-color: var(--input-bg);
+            color: var(--text-color);
         }
+        
         button {
-            background-color: #4CAF50;
+            background-color: var(--button-bg);
             color: white;
             padding: 12px 20px;
             border: none;
-            border-radius: 4px;
+            border-radius: 8px;
             cursor: pointer;
             width: 100%;
+            font-weight: bold;
+            transition: all 0.3s ease;
         }
+        
         button:hover {
-            background-color: #45a049;
+            background-color: var(--button-hover-bg);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
         }
+        
         #response {
             text-align: center;
             margin-top: 20px;
             font-size: 18px;
-            color: #555;
+            color: var(--text-color);
+            font-weight: bold;
+            padding: 15px;
+            background-color: var(--form-bg);
+            border-radius: 8px;
+            box-shadow: var(--form-shadow);
+            display: none;
         }
     </style>
 </head>
 <body>
+    {% include 'components/navbar.html' %}
+    
     <h1>Enqueue Dummy Job</h1>
 
     <form id="jobForm">
@@ -82,7 +129,9 @@
             });
 
             const result = await response.json();
-            document.getElementById('response').innerText = result.message;
+            const responseEl = document.getElementById('response');
+            responseEl.innerText = result.message;
+            responseEl.style.display = 'block';
         });
     </script>
 </body>
