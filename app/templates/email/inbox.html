@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,17 +10,39 @@
     <style>
         /* Email-specific styles */
         :root {
-            --email-card-bg: var(--control-bg);
-            --email-card-border: rgba(64, 190, 255, 0.2);
-            --email-card-hover-shadow: 0 4px 16px rgba(64, 190, 255, 0.15);
+            --bg-color: #121212;
+            --text-color: #ffffff;
+            --accent-color: #50b3a2;
+            --secondary-color: #3a8292;
+            --email-card-bg: rgba(30, 30, 40, 0.7);
+            --email-card-border: rgba(80, 179, 162, 0.3);
+            --email-card-hover-shadow: 0 4px 16px rgba(80, 179, 162, 0.15);
             --email-sidebar-bg: rgba(20, 30, 48, 0.7);
+            --text-secondary: rgba(255, 255, 255, 0.7);
+            --unread-badge: #50b3a2;
+            --toolbar-bg: rgba(80, 179, 162, 0.1);
+            --action-button-bg: rgba(80, 179, 162, 0.2);
+            --action-button-hover-bg: rgba(80, 179, 162, 0.3);
+            --compose-btn-gradient-start: #50b3a2;
+            --compose-btn-gradient-end: #3a8292;
         }
         
         [data-theme="light"] {
+            --bg-color: #f5f5f5;
+            --text-color: #121212;
+            --accent-color: #50b3a2;
+            --secondary-color: #3a8292;
             --email-card-bg: rgba(255, 255, 255, 0.9);
-            --email-card-border: rgba(25, 119, 210, 0.2);
-            --email-card-hover-shadow: 0 4px 16px rgba(25, 119, 210, 0.15);
+            --email-card-border: rgba(80, 179, 162, 0.2);
+            --email-card-hover-shadow: 0 4px 16px rgba(80, 179, 162, 0.15);
             --email-sidebar-bg: rgba(240, 240, 250, 0.9);
+            --text-secondary: rgba(0, 0, 0, 0.6);
+            --unread-badge: #50b3a2;
+            --toolbar-bg: rgba(80, 179, 162, 0.05);
+            --action-button-bg: rgba(80, 179, 162, 0.1);
+            --action-button-hover-bg: rgba(80, 179, 162, 0.2);
+            --compose-btn-gradient-start: #50b3a2;
+            --compose-btn-gradient-end: #3a8292;
         }
         
         body, html {
@@ -32,6 +54,7 @@
             width: 100%;
             height: 100%;
             overflow-x: hidden;
+            font-family: 'Arial', sans-serif;
         }
         
         .inbox-container {
@@ -45,7 +68,7 @@
             width: 200px;
             background-color: var(--email-sidebar-bg);
             backdrop-filter: blur(10px);
-            border-right: 1px solid var(--circle-border);
+            border-right: 1px solid var(--email-card-border);
             padding: 1.5rem 1rem;
             box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
         }
@@ -62,7 +85,7 @@
         }
         
         .sidebar-item:hover, .sidebar-item.active {
-            background-color: rgba(64, 190, 255, 0.15);
+            background-color: var(--action-button-bg);
         }
         
         .sidebar-item.active {
@@ -117,7 +140,7 @@
             display: flex;
             align-items: center;
             gap: 1rem;
-            background-color: rgba(64, 190, 255, 0.05);
+            background-color: var(--toolbar-bg);
             border-radius: 12px;
             backdrop-filter: blur(5px);
         }
@@ -126,33 +149,33 @@
             padding: 0.5rem 1rem;
             border-radius: 8px;
             color: var(--text-color);
-            background-color: rgba(64, 190, 255, 0.1);
+            background-color: var(--action-button-bg);
             transition: all 0.2s ease;
             display: flex;
             align-items: center;
             gap: 0.5rem;
-            border: 1px solid var(--circle-border);
+            border: 1px solid var(--email-card-border);
         }
         
         .action-button:hover {
-            background-color: rgba(64, 190, 255, 0.2);
+            background-color: var(--action-button-hover-bg);
             transform: translateY(-1px);
         }
         
         .compose-btn {
-            background: linear-gradient(135deg, var(--accent-color), #2a7fff);
+            background: linear-gradient(135deg, var(--compose-btn-gradient-start), var(--compose-btn-gradient-end));
             color: white;
             padding: 0.75rem 1.5rem;
             border-radius: 8px;
             font-weight: 500;
             transition: all 0.3s ease;
             border: none;
-            box-shadow: 0 4px 12px rgba(42, 127, 255, 0.3);
+            box-shadow: 0 4px 12px rgba(80, 179, 162, 0.3);
         }
         
         .compose-btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 6px 15px rgba(42, 127, 255, 0.4);
+            box-shadow: 0 6px 15px rgba(80, 179, 162, 0.4);
         }
         
         .message-date {
@@ -176,13 +199,13 @@
             width: 8px;
             height: 8px;
             border-radius: 50%;
-            background-color: var(--accent-color);
+            background-color: var(--unread-badge);
             display: inline-block;
             margin-right: 0.5rem;
         }
     </style>
 </head>
-<body style="background-color: var(--bg-color);">
+<body>
     {% include 'components/navbar.html' %}
 
     <div class="inbox-container">
@@ -198,23 +221,31 @@
             </div>
             <div class="space-y-2">
                 <a href="#" class="sidebar-item active">
-                    <span class="unread-badge"></span>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                    </svg>
                     Inbox
                 </a>
                 <a href="#" class="sidebar-item">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
                     </svg>
-                    Sent
+                    Saved
                 </a>
                 <a href="#" class="sidebar-item">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    Drafts
+                    Important
                 </a>
                 <a href="#" class="sidebar-item">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                    Analytics
+                </a>
+                <a href="#" class="sidebar-item">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                     </svg>
                     Trash
@@ -222,9 +253,8 @@
             </div>
         </div>
 
-        <!-- Main Content -->
+        <!-- Main Content Area -->
         <div class="main-content">
-            <!-- Toolbar -->
             <div class="toolbar">
                 <button class="action-button">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -234,65 +264,81 @@
                 </button>
                 <button class="action-button">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 19v-8.93a2 2 0 01.89-1.664l7-4.666a2 2 0 012.22 0l7 4.666A2 2 0 0121 10.07V19M3 19a2 2 0 002 2h14a2 2 0 002-2M3 19l6.75-4.5M21 19l-6.75-4.5M3 10l6.75 4.5M21 10l-6.75 4.5m0 0l-1.14.76a2 2 0 01-2.22 0l-1.14-.76" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
                     </svg>
-                    Archive
+                    Save
                 </button>
-                <span class="flex-1"></span>
                 <button class="action-button">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
                     </svg>
-                    Filter
+                    Reply
                 </button>
             </div>
 
-            <!-- Message List -->
             <div class="message-list">
-                {% for message in messages %}
-                <div class="message-item{% if message.unread %} bg-opacity-90{% endif %}">
+                <div class="message-item">
                     <div class="flex justify-between">
-                        <div class="message-sender">
-                            {% if message.unread %}<span class="unread-badge"></span>{% endif %}
-                            {{ message.sender }}
+                        <div class="flex items-center">
+                            <span class="unread-badge"></span>
+                            <div class="message-sender">Google Cloud</div>
                         </div>
-                        <div class="message-date">
-                            {{ message.date }}
+                        <div class="message-date">10:30 AM</div>
+                    </div>
+                    <div class="message-subject">Your Monthly Usage Report</div>
+                    <div class="message-preview">Your Google Cloud billing report is now available. Total usage for the month of May is $15.45. Click here to view detailed usage.</div>
+                </div>
+
+                <div class="message-item">
+                    <div class="flex justify-between">
+                        <div class="flex items-center">
+                            <div class="message-sender">Sarah Johnson</div>
                         </div>
+                        <div class="message-date">Yesterday</div>
                     </div>
-                    <div class="message-subject">
-                        {{ message.subject }}
-                    </div>
-                    <div class="message-preview">
-                        {{ message.snippet }}
-                    </div>
+                    <div class="message-subject">Project Update - DelightMate Progress</div>
+                    <div class="message-preview">Hi team, I've just completed the frontend implementation for the new dashboard features. I've pushed the changes to the repository and would appreciate your feedback...</div>
                 </div>
-                {% endfor %}
-                
-                {% if not messages %}
-                <div class="flex flex-col items-center justify-center h-64">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                    </svg>
-                    <h3 class="text-xl font-medium mb-2">No messages found</h3>
-                    <p class="text-sm opacity-70">Your inbox is currently empty</p>
+
+                <div class="message-item">
+                    <div class="flex justify-between">
+                        <div class="flex items-center">
+                            <div class="message-sender">GitHub</div>
+                        </div>
+                        <div class="message-date">May 15</div>
+                    </div>
+                    <div class="message-subject">Security Alert: New Login Detected</div>
+                    <div class="message-preview">We noticed a new sign-in to your GitHub account from an unrecognized device. If this was you, you can disregard this message. If not, please secure your account...</div>
                 </div>
-                {% endif %}
+
+                <div class="message-item">
+                    <div class="flex justify-between">
+                        <div class="flex items-center">
+                            <span class="unread-badge"></span>
+                            <div class="message-sender">Slack Team</div>
+                        </div>
+                        <div class="message-date">May 14</div>
+                    </div>
+                    <div class="message-subject">Slack: Daily Digest</div>
+                    <div class="message-preview">Here's what you missed in your Slack workspaces. You have 5 unread messages and 2 mentions across 3 channels.</div>
+                </div>
+
+                <div class="message-item">
+                    <div class="flex justify-between">
+                        <div class="flex items-center">
+                            <div class="message-sender">API Conference</div>
+                        </div>
+                        <div class="message-date">May 12</div>
+                    </div>
+                    <div class="message-subject">Confirmation: Your Registration</div>
+                    <div class="message-preview">Thank you for registering for the 2023 API Conference. Your ticket has been confirmed. Please find the event details and schedule attached.</div>
+                </div>
             </div>
         </div>
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Handle message selection
-            const messageItems = document.querySelectorAll('.message-item');
-            messageItems.forEach(item => {
-                item.addEventListener('click', function() {
-                    messageItems.forEach(i => i.classList.remove('active'));
-                    this.classList.add('active');
-                });
-            });
-        });
+        // Add any client-side JavaScript here if needed
     </script>
 </body>
 </html>
