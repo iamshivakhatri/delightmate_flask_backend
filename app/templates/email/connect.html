@@ -1,15 +1,92 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8">
   <title>Connect Your Gmail</title>
   <link href="{{ url_for('static', filename='css/tailwind.css') }}" rel="stylesheet">
+  <link href="{{ url_for('static', filename='css/cosmic.css') }}" rel="stylesheet">
+  <script src="{{ url_for('static', filename='js/theme.js') }}"></script>
+  <style>
+    :root {
+      --card-bg: rgba(30, 30, 40, 0.7);
+      --card-border: rgba(80, 179, 162, 0.3);
+      --card-shadow: 0 4px 16px rgba(80, 179, 162, 0.15);
+      --btn-bg: #50b3a2;
+      --btn-hover: #3a8292;
+    }
+    
+    [data-theme="light"] {
+      --card-bg: rgba(255, 255, 255, 0.9);
+      --card-border: rgba(80, 179, 162, 0.2);
+      --card-shadow: 0 4px 16px rgba(80, 179, 162, 0.1);
+      --btn-bg: #50b3a2;
+      --btn-hover: #3a8292;
+    }
+    
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      font-family: 'Arial', sans-serif;
+      transition: background-color 0.5s ease, color 0.5s ease;
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .card {
+      max-width: 500px;
+      padding: 2rem;
+      background-color: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      box-shadow: var(--card-shadow);
+      backdrop-filter: blur(10px);
+      text-align: center;
+    }
+    
+    .title {
+      font-size: 2rem;
+      font-weight: bold;
+      margin-bottom: 1.5rem;
+      color: var(--text-color);
+    }
+    
+    .subtitle {
+      margin-bottom: 2rem;
+      color: var(--text-color);
+      opacity: 0.8;
+    }
+    
+    .btn {
+      display: inline-block;
+      padding: 0.75rem 1.5rem;
+      background-color: var(--btn-bg);
+      color: white;
+      font-weight: 600;
+      border-radius: 8px;
+      text-decoration: none;
+      transition: all 0.3s ease;
+      border: none;
+      box-shadow: 0 4px 12px rgba(80, 179, 162, 0.3);
+    }
+    
+    .btn:hover {
+      background-color: var(--btn-hover);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 15px rgba(80, 179, 162, 0.4);
+    }
+  </style>
 </head>
-<body class="bg-gray-50 flex items-center justify-center min-h-screen">
-  <div class="text-center">
-    <h1 class="text-4xl font-bold mb-6">Connect Your Gmail</h1>
-    <p class="mb-8 text-gray-600">Authorize access to manage your emails with DelightMate.</p>
-    <a href="{{ url_for('email.email_login') }}" class="px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700">
+<body>
+  {% include 'components/navbar.html' %}
+  
+  <div class="card">
+    <h1 class="title">Connect Your Gmail</h1>
+    <p class="subtitle">Authorize access to manage your emails with DelightMate.</p>
+    <a href="{{ url_for('email.email_login') }}" class="btn">
       Login with Google
     </a>
   </div>

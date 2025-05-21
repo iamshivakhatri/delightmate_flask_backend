@@ -1,30 +1,137 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8">
   <title>Connected!</title>
   <link href="{{ url_for('static', filename='css/tailwind.css') }}" rel="stylesheet">
+  <link href="{{ url_for('static', filename='css/cosmic.css') }}" rel="stylesheet">
+  <script src="{{ url_for('static', filename='js/theme.js') }}"></script>
+  <style>
+    :root {
+      --card-bg: rgba(30, 30, 40, 0.7);
+      --card-border: rgba(80, 179, 162, 0.3);
+      --card-shadow: 0 4px 16px rgba(80, 179, 162, 0.15);
+      --success-text: #50b3a2;
+      --btn-bg: #50b3a2;
+      --btn-hover: #3a8292;
+      --message-success-bg: rgba(80, 179, 162, 0.2);
+      --message-success-text: #50b3a2;
+      --message-error-bg: rgba(255, 82, 82, 0.2);
+      --message-error-text: #ff5252;
+    }
+    
+    [data-theme="light"] {
+      --card-bg: rgba(255, 255, 255, 0.9);
+      --card-border: rgba(80, 179, 162, 0.2);
+      --card-shadow: 0 4px 16px rgba(80, 179, 162, 0.1);
+      --success-text: #50b3a2;
+      --btn-bg: #50b3a2;
+      --btn-hover: #3a8292;
+      --message-success-bg: rgba(80, 179, 162, 0.1);
+      --message-success-text: #50b3a2;
+      --message-error-bg: rgba(255, 82, 82, 0.1);
+      --message-error-text: #ff5252;
+    }
+    
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      font-family: 'Arial', sans-serif;
+      transition: background-color 0.5s ease, color 0.5s ease;
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .card {
+      max-width: 500px;
+      padding: 2rem;
+      background-color: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      box-shadow: var(--card-shadow);
+      backdrop-filter: blur(10px);
+      text-align: center;
+    }
+    
+    .title {
+      font-size: 2rem;
+      font-weight: bold;
+      margin-bottom: 1.5rem;
+      color: var(--success-text);
+    }
+    
+    .subtitle {
+      margin-bottom: 2rem;
+      color: var(--text-color);
+    }
+    
+    .account-info {
+      margin-bottom: 1rem;
+      color: var(--success-text);
+    }
+    
+    .btn {
+      display: inline-block;
+      padding: 0.75rem 1.5rem;
+      background-color: var(--btn-bg);
+      color: white;
+      font-weight: 600;
+      border-radius: 8px;
+      text-decoration: none;
+      transition: all 0.3s ease;
+      border: none;
+      box-shadow: 0 4px 12px rgba(80, 179, 162, 0.3);
+    }
+    
+    .btn:hover {
+      background-color: var(--btn-hover);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 15px rgba(80, 179, 162, 0.4);
+    }
+    
+    .flash-message {
+      margin-bottom: 1rem;
+      padding: 0.75rem;
+      border-radius: 8px;
+    }
+    
+    .flash-message.success {
+      background-color: var(--message-success-bg);
+      color: var(--message-success-text);
+    }
+    
+    .flash-message.error {
+      background-color: var(--message-error-bg);
+      color: var(--message-error-text);
+    }
+  </style>
 </head>
-<body class="bg-green-50 flex items-center justify-center min-h-screen">
-  <div class="text-center max-w-lg p-6 rounded-xl bg-white shadow-sm">
+<body>
+  {% include 'components/navbar.html' %}
+  
+  <div class="card">
     <!-- Flash Messages -->
     {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
         {% for category, message in messages %}
           {% if category == 'error' %}
-            <div class="mb-4 p-3 bg-red-100 text-red-700 rounded-lg">
+            <div class="flash-message error">
               {{ message }}
             </div>
           {% elif category == 'warning' %}
-            <div class="mb-4 p-3 bg-yellow-100 text-yellow-700 rounded-lg">
+            <div class="flash-message warning">
               {{ message }}
             </div>
           {% elif category == 'success' %}
-            <div class="mb-4 p-3 bg-green-100 text-green-700 rounded-lg">
+            <div class="flash-message success">
               {{ message }}
             </div>
           {% else %}
-            <div class="mb-4 p-3 bg-blue-100 text-blue-700 rounded-lg">
+            <div class="flash-message">
               {{ message }}
             </div>
           {% endif %}
@@ -32,15 +139,15 @@
       {% endif %}
     {% endwith %}
     
-    <h1 class="text-4xl font-bold mb-6 text-green-800">Gmail Connected!</h1>
+    <h1 class="title">Gmail Connected!</h1>
     
     {% if session.google_credentials and session.google_credentials.email %}
-      <p class="mb-4 text-green-600">Connected account: <strong>{{ session.google_credentials.email }}</strong></p>
+      <p class="account-info">Connected account: <strong>{{ session.google_credentials.email }}</strong></p>
     {% endif %}
     
-    <p class="mb-8 text-green-600">You're all set. Your emails will be managed by DelightMate now.</p>
+    <p class="subtitle">You're all set. Your emails will be managed by DelightMate now.</p>
     
-    <a href="/" class="px-6 py-3 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700">
+    <a href="/" class="btn">
       Go to Dashboard
     </a>
   </div>
