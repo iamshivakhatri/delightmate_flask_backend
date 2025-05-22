@@ -57,20 +57,27 @@
             font-family: 'Arial', sans-serif;
         }
         
+        .app-wrapper {
+            display: flex;
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+        }
+        
         .inbox-container {
             display: flex;
-            height: calc(100vh - 80px);
+            height: 100vh;
             background-color: var(--bg-color);
+            flex: 1;
             padding-top: 80px;
         }
         
         .sidebar {
             width: 200px;
-            background-color: var(--email-sidebar-bg);
+            background-color: transparent;
             backdrop-filter: blur(10px);
             border-right: 1px solid var(--email-card-border);
             padding: 1.5rem 1rem;
-            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
         }
         
         .sidebar-item {
@@ -112,11 +119,11 @@
         .message-item {
             padding: 1.25rem;
             border-radius: 12px;
-            background-color: var(--email-card-bg);
+            background-color: rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(10px);
             border: 1px solid var(--email-card-border);
             cursor: pointer;
             transition: all 0.3s ease;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         }
         
         .message-item:hover {
@@ -140,9 +147,9 @@
             display: flex;
             align-items: center;
             gap: 1rem;
-            background-color: var(--toolbar-bg);
+            background-color: rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(10px);
             border-radius: 12px;
-            backdrop-filter: blur(5px);
         }
         
         .action-button {
@@ -201,144 +208,164 @@
             border-radius: 50%;
             background-color: var(--unread-badge);
             display: inline-block;
-            margin-right: 0.5rem;
+            margin-right: 8px;
+        }
+        
+        [data-theme="light"] {
+            --bg-color: #f5f5f5;
+            --text-color: #121212;
+            --email-card-bg: rgba(255, 255, 255, 0.7);
+            --text-secondary: rgba(0, 0, 0, 0.6);
+        }
+        
+        [data-theme="light"] .message-item {
+            background-color: rgba(255, 255, 255, 0.7);
+        }
+        
+        [data-theme="light"] .toolbar {
+            background-color: rgba(255, 255, 255, 0.7);
         }
     </style>
 </head>
-<body>
-    {% include 'components/navbar.html' %}
-
-    <div class="inbox-container">
-        <!-- Sidebar -->
-        <div class="sidebar">
-            <div class="mb-6">
-                <button class="compose-btn w-full flex items-center justify-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+<body style="background-color: var(--bg-color);">
+    <div class="app-wrapper">
+        <div class="inbox-container">
+            {% include 'components/navbar.html' %}
+            
+            <div class="sidebar">
+                <button class="compose-btn flex items-center justify-center w-full mb-6">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
                     </svg>
                     Compose
                 </button>
-            </div>
-            <div class="space-y-2">
-                <a href="#" class="sidebar-item active">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                
+                <div class="sidebar-item active">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                        <polyline points="22,6 12,13 2,6"></polyline>
                     </svg>
                     Inbox
-                </a>
-                <a href="#" class="sidebar-item">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+                </div>
+                
+                <div class="sidebar-item">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M14 9l6 6-6 6"></path>
+                        <path d="M4 4v7a4 4 0 0 0 4 4h11"></path>
                     </svg>
-                    Saved
-                </a>
-                <a href="#" class="sidebar-item">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    Important
-                </a>
-                <a href="#" class="sidebar-item">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                    </svg>
-                    Analytics
-                </a>
-                <a href="#" class="sidebar-item">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    Sent
+                </div>
+                
+                <div class="sidebar-item">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="3 6 5 6 21 6"></polyline>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
                     </svg>
                     Trash
-                </a>
-            </div>
-        </div>
-
-        <!-- Main Content Area -->
-        <div class="main-content">
-            <div class="toolbar">
-                <button class="action-button">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                    Delete
-                </button>
-                <button class="action-button">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
-                    </svg>
-                    Save
-                </button>
-                <button class="action-button">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
-                    </svg>
-                    Reply
-                </button>
-            </div>
-
-            <div class="message-list">
-                <div class="message-item">
-                    <div class="flex justify-between">
-                        <div class="flex items-center">
-                            <span class="unread-badge"></span>
-                            <div class="message-sender">Google Cloud</div>
-                        </div>
-                        <div class="message-date">10:30 AM</div>
-                    </div>
-                    <div class="message-subject">Your Monthly Usage Report</div>
-                    <div class="message-preview">Your Google Cloud billing report is now available. Total usage for the month of May is $15.45. Click here to view detailed usage.</div>
                 </div>
-
-                <div class="message-item">
-                    <div class="flex justify-between">
-                        <div class="flex items-center">
+                
+                <div class="sidebar-item">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                    </svg>
+                    Starred
+                </div>
+                
+                <div class="sidebar-item">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                    Contacts
+                </div>
+            </div>
+            
+            <div class="main-content">
+                <div class="toolbar">
+                    <button class="action-button">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="3 6 5 6 21 6"></polyline>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                        </svg>
+                        Delete
+                    </button>
+                    
+                    <button class="action-button">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                        Save
+                    </button>
+                    
+                    <button class="action-button">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                            <polyline points="22,6 12,13 2,6"></polyline>
+                        </svg>
+                        Reply
+                    </button>
+                </div>
+                
+                <div class="message-list">
+                    <div class="message-item">
+                        <div class="flex justify-between">
+                            <div class="message-sender"><span class="unread-badge"></span>Google Cloud</div>
+                            <div class="message-date">10:30 AM</div>
+                        </div>
+                        <div class="message-subject">Your Monthly Usage Report</div>
+                        <div class="message-preview">Your Google Cloud billing report is now available. Total usage for the month of May is $15.45. Click here to view detailed usage.</div>
+                    </div>
+                    
+                    <div class="message-item">
+                        <div class="flex justify-between">
                             <div class="message-sender">Sarah Johnson</div>
+                            <div class="message-date">Yesterday</div>
                         </div>
-                        <div class="message-date">Yesterday</div>
+                        <div class="message-subject">Project Update - DelightMate Progress</div>
+                        <div class="message-preview">Hi team, I've just completed the frontend implementation for the new dashboard features. I've pushed the changes to the repository and would appreciate your feedback...</div>
                     </div>
-                    <div class="message-subject">Project Update - DelightMate Progress</div>
-                    <div class="message-preview">Hi team, I've just completed the frontend implementation for the new dashboard features. I've pushed the changes to the repository and would appreciate your feedback...</div>
-                </div>
-
-                <div class="message-item">
-                    <div class="flex justify-between">
-                        <div class="flex items-center">
+                    
+                    <div class="message-item">
+                        <div class="flex justify-between">
                             <div class="message-sender">GitHub</div>
+                            <div class="message-date">May 15</div>
                         </div>
-                        <div class="message-date">May 15</div>
+                        <div class="message-subject">Security Alert: New Login Detected</div>
+                        <div class="message-preview">We noticed a new sign-in to your GitHub account from an unrecognized device. If this was you, you can disregard this message. If not, please secure your account...</div>
                     </div>
-                    <div class="message-subject">Security Alert: New Login Detected</div>
-                    <div class="message-preview">We noticed a new sign-in to your GitHub account from an unrecognized device. If this was you, you can disregard this message. If not, please secure your account...</div>
-                </div>
-
-                <div class="message-item">
-                    <div class="flex justify-between">
-                        <div class="flex items-center">
-                            <span class="unread-badge"></span>
-                            <div class="message-sender">Slack Team</div>
+                    
+                    <div class="message-item">
+                        <div class="flex justify-between">
+                            <div class="message-sender"><span class="unread-badge"></span>Slack Team</div>
+                            <div class="message-date">May 14</div>
                         </div>
-                        <div class="message-date">May 14</div>
+                        <div class="message-subject">Slack: Daily Digest</div>
+                        <div class="message-preview">Here's what you missed in your Slack workspaces. You have 5 unread messages and 2 mentions across 3 channels.</div>
                     </div>
-                    <div class="message-subject">Slack: Daily Digest</div>
-                    <div class="message-preview">Here's what you missed in your Slack workspaces. You have 5 unread messages and 2 mentions across 3 channels.</div>
-                </div>
-
-                <div class="message-item">
-                    <div class="flex justify-between">
-                        <div class="flex items-center">
-                            <div class="message-sender">API Conference</div>
-                        </div>
-                        <div class="message-date">May 12</div>
-                    </div>
-                    <div class="message-subject">Confirmation: Your Registration</div>
-                    <div class="message-preview">Thank you for registering for the 2023 API Conference. Your ticket has been confirmed. Please find the event details and schedule attached.</div>
                 </div>
             </div>
         </div>
     </div>
-
+    
     <script>
-        // Add any client-side JavaScript here if needed
+        document.addEventListener('DOMContentLoaded', function() {
+            // Email interaction code
+            const messageItems = document.querySelectorAll('.message-item');
+            
+            messageItems.forEach(item => {
+                item.addEventListener('click', function() {
+                    // Could expand the message or navigate to a detail view
+                    console.log('Message clicked');
+                });
+            });
+            
+            const composeButton = document.querySelector('.compose-btn');
+            composeButton.addEventListener('click', function() {
+                // Navigate to compose page or open compose modal
+                console.log('Compose clicked');
+            });
+        });
     </script>
 </body>
 </html>
