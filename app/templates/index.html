@@ -101,84 +101,93 @@
             color: var(--text-color);
             border-radius: 12px 12px 12px 0;
         }
+        
+        /* Enhanced close button styles */
+        #closeTool:hover {
+            background: rgba(255, 255, 255, 0.2) !important;
+            transform: scale(1.1);
+        }
+        
+        /* Panel shadow effects */
+        .main-interface-panel {
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        
+        .tool-interface-panel {
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Responsive design for new layout */
+        @media (max-width: 768px) {
+            .cosmos-container {
+                flex-direction: column !important;
+                gap: 20px !important;
+                padding: 20px !important;
+            }
+            
+            .tool-interface-panel {
+                min-height: auto !important;
+            }
+        }
     </style>
 </head>
 <body style="background-color: var(--bg-color);">
-    <div class="app-wrapper" style="display: flex; height: 100vh; width: 100vw; overflow: hidden;">
-        <!-- Main Content Area -->
-        <div class="cosmos-container" style="flex: 1; position: relative; overflow: hidden;">
-        {% include 'components/navbar.html' %}
-        
-        <!-- User Profile -->
-        {% if user and user.is_logged_in %}
-        <div class="cosmic-user-profile">
-            {% if user.picture %}
-            <img src="{{ user.picture }}" alt="Profile">
-            {% else %}
-            <div style="width: 40px; height: 40px; border-radius: 50%; background-color: rgba(64, 190, 255, 0.8); display: flex; justify-content: center; align-items: center; color: white; font-weight: bold;">
-                {{ user.name[0] if user.name else 'U' }}
+    <div class="app-wrapper" style="display: flex; height: 100vh; width: 100vw; overflow: hidden; position: relative;">
+        <!-- Main Content Area - Takes Full Screen -->
+        <div class="main-interface-panel" style="flex: 1; background: var(--bg-color); display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; position: relative; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); margin: 20px;">
+            {% include 'components/navbar.html' %}
+            
+            <!-- User Profile -->
+            {% if user and user.is_logged_in %}
+            <div class="cosmic-user-profile" style="position: absolute; top: 20px; right: 20px;">
+                {% if user.picture %}
+                <img src="{{ user.picture }}" alt="Profile" style="width: 40px; height: 40px; border-radius: 50%;">
+                {% else %}
+                <div style="width: 40px; height: 40px; border-radius: 50%; background-color: rgba(64, 190, 255, 0.8); display: flex; justify-content: center; align-items: center; color: white; font-weight: bold;">
+                    {{ user.name[0] if user.name else 'U' }}
+                </div>
+                {% endif %}
+                <span class="cosmic-user-name" style="margin-left: 8px; color: var(--text-color);">{{ user.name if user.name else 'User' }}</span>
             </div>
             {% endif %}
-            <span class="cosmic-user-name">{{ user.name if user.name else 'User' }}</span>
-        </div>
-        {% endif %}
-        
-        <!-- Voice Mode Indicator -->
-        <!-- <div class="voice-mode">Voice mode</div> -->
-        
-        <!-- Welcome Message -->
-        <!-- <div class="cosmic-welcome" id="welcomeMessage">
-            <h2>I'm DelightMate</h2>
-            <p>Your digital teammate ready to help with emails, calendar, and more.</p>
-            <p class="welcome-hint">Click the microphone to start speaking</p>
-        </div> -->
 
-        <!-- Cosmic Sphere with adjusted positioning -->
-        <div class="cosmos-sphere" id="cosmosSphere" style="margin-top: -30px;"></div>
-        
-        <!-- Status Text - positioned higher -->
-        <div class="status-text" id="statusText" style="position: absolute; top: 20%; left: 50%; transform: translateX(-50%); font-size: 18px; color: var(--accent-color); z-index: 10;">Listening...</div>
-        
-        <!-- Conversation Container -->
-        <div class="conversation-container" id="messageContainer" style="display: none; position: absolute; top: 40%; left: 50%; transform: translateX(-50%); width: 80%; max-width: 450px; max-height: 40%; overflow-y: auto; z-index: 10; padding: 15px; border-radius: 12px; background-color: rgba(0, 0, 0, 0.2); backdrop-filter: blur(10px);">
-            <!-- Close button for conversation -->
-            <button id="closeConversation" style="position: absolute; top: 5px; right: 5px; background: none; border: none; color: white; font-size: 16px; cursor: pointer; z-index: 11;">×</button>
-            <!-- Messages will be added here dynamically -->
-            <div id="responseMessage" style="position: absolute; left: -9999px; visibility: hidden;"><!-- Hidden element for screen readers --></div>
-        </div>
-        
-        <!-- Control Buttons -->
-        <div class="controls">
-            <button class="control-btn">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
-                </svg>
-            </button>
-            <button class="control-btn microphone-btn" id="micButton">
-                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
-                    <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
-                    <line x1="12" y1="19" x2="12" y2="23"></line>
-                    <line x1="8" y1="23" x2="16" y2="23"></line>
-                </svg>
-            </button>
-            <button class="control-btn">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="11" cy="11" r="8"></circle>
-                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                </svg>
-            </button>
-        </div>
-
-    </div>
-        
-        <!-- Right Sidebar for Tools - with visible border in both themes -->
-        <div id="toolSidebar" class="tool-sidebar" style="width: 0; height: 100vh; background-color: var(--bg-color); border-left: 2px solid var(--text-color); transition: width 0.3s ease; overflow: hidden;">
-            <div class="tool-header" style="display: flex; justify-content: space-between; align-items: center; padding: 15px; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">
-                <h3 id="toolTitle" style="margin: 0; color: var(--text-color); font-size: 1.2rem;">Tool Title</h3>
-                <button id="closeTool" style="background: none; border: none; color: var(--text-color); font-size: 20px; cursor: pointer;">×</button>
+            <!-- Cosmic Sphere with adjusted positioning -->
+            <div class="cosmos-sphere" id="cosmosSphere" style="margin: 0;"></div>
+            
+            <!-- Status Text - positioned higher -->
+            <div class="status-text" id="statusText" style="margin-top: 40px; font-size: 18px; color: var(--accent-color); text-align: center;">Ready to start...</div>
+            
+            <!-- Control Buttons -->
+            <div class="controls" style="margin-top: 40px;">
+                <button class="control-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                    </svg>
+                </button>
+                <button class="control-btn microphone-btn" id="micButton">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                        <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                        <line x1="12" y1="19" x2="12" y2="23"></line>
+                        <line x1="8" y1="23" x2="16" y2="23"></line>
+                    </svg>
+                </button>
+                <button class="control-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                </button>
             </div>
-            <div id="toolContent" class="tool-content" style="padding: 15px;">
+        </div>
+        
+        <!-- Tool Sidebar - Hidden by Default, Slides in from Right Side by Side -->
+        <div id="toolSidebar" style="width: 0; opacity: 0; overflow: hidden; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); background: var(--bg-color); border-radius: 24px; border: 1px solid rgba(255, 255, 255, 0.1); backdrop-filter: blur(20px); margin: 20px 20px 20px 0; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1); flex-shrink: 0;">
+            <div class="tool-header" style="display: flex; justify-content: space-between; align-items: center; padding: 30px 30px 20px 30px; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">
+                <h3 id="toolTitle" style="margin: 0; color: var(--text-color); font-size: 1.4rem; font-weight: 600; white-space: nowrap;">Tool Title</h3>
+                <button id="closeTool" style="background: rgba(255, 255, 255, 0.1); border: none; color: var(--text-color); font-size: 18px; cursor: pointer; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: all 0.2s ease;">×</button>
+            </div>
+            <div id="toolContent" class="tool-content" style="padding: 30px; height: calc(100vh - 160px); overflow-y: auto;">
                 <!-- Tool content will be dynamically generated -->
             </div>
         </div>
@@ -190,8 +199,6 @@
             const cosmosSphere = document.getElementById('cosmosSphere');
             const statusText = document.getElementById('statusText');
             const micButton = document.getElementById('micButton');
-            const messageContainer = document.getElementById('messageContainer');
-            const responseMessage = document.getElementById('responseMessage');
             
             // Create a dedicated state management object to centralize our application state
             // This will help us keep track of state across different function calls
@@ -292,8 +299,8 @@
             micButton.addEventListener('click', function() {
                 console.log(`${AppState.logPrefix} Mic button clicked`);
                 
-                if (AppState.isRecording) {
-                    stopRecording();
+                if (AppState.isRecording || AppState.conversationActive) {
+                    endConversation();
                     // Change microphone icon to original icon when stopping
                     micButton.innerHTML = `
                         <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -303,6 +310,7 @@
                             <line x1="8" y1="23" x2="16" y2="23"></line>
                         </svg>
                     `;
+                    micButton.classList.remove('recording');
                 } else {
                     startConversation();
                     // Change microphone icon to stop icon when recording
@@ -311,6 +319,7 @@
                             <rect x="6" y="6" width="12" height="12" rx="2" ry="2"></rect>
                         </svg>
                     `;
+                    micButton.classList.add('recording');
                 }
             });
 
@@ -776,9 +785,6 @@
                         return;
                     }
 
-                    // Add user message to conversation log
-                    addToConversationLog(transcript, "user");
-
                     // Check for pending tool confirmations first
                     if (AppState.pendingToolAction) {
                         try {
@@ -862,9 +868,6 @@ The system will handle the actual implementation of these capabilities.`;
                     const responseText = agentData.response;
                     const detectedIntent = agentData.intent;
 
-                    // Add AI response to conversation log
-                    addToConversationLog(responseText, "ai");
-
                     // Convert to speech using TTS API
                     await processAIResponseTTS(responseText);
 
@@ -877,7 +880,8 @@ The system will handle the actual implementation of these capabilities.`;
                             AppState.isProcessingTool = false;
                         } catch (error) {
                             console.error(`${AppState.logPrefix} Error handling tool:`, error);
-                            AppState.isProcessingTool = false;
+                            console.log(`${AppState.logPrefix} Tool error: ${error.message}`);
+                            return true; // Return true to prevent normal conversation flow
                         }
                     }
 
@@ -887,7 +891,6 @@ The system will handle the actual implementation of these capabilities.`;
                 } catch (error) {
                     console.error(`${AppState.logPrefix} Error:`, error);
                     statusText.textContent = 'Error: ' + error.message;
-                    addToConversationLog("Sorry, I encountered an error: " + error.message, "ai");
 
                     // Resume listening after error
                     setTimeout(() => {
@@ -974,33 +977,6 @@ The system will handle the actual implementation of these capabilities.`;
                     console.error(`${AppState.logPrefix} Error during TTS:`, error);
                     return false;
                 }
-            }
-
-            // Add close conversation button functionality
-            document.getElementById('closeConversation').addEventListener('click', () => {
-                messageContainer.style.display = 'none';
-                // Clear all messages
-                const messages = messageContainer.querySelectorAll('.message');
-                messages.forEach(msg => msg.remove());
-            });
-
-            // Add message to conversation log function
-            function addToConversationLog(message, sender) {
-                // Show conversation container if hidden
-                messageContainer.style.display = 'block';
-                
-                const messageDiv = document.createElement('div');
-                messageDiv.className = `message ${sender}`;
-                
-                const messageContent = document.createElement('div');
-                messageContent.className = 'message-content';
-                messageContent.textContent = message;
-                
-                messageDiv.appendChild(messageContent);
-                messageContainer.appendChild(messageDiv);
-
-                // Scroll to bottom
-                messageContainer.scrollTop = messageContainer.scrollHeight;
             }
 
             // Tool detection system - analyzes transcript to identify tool intents
@@ -1100,7 +1076,7 @@ The system will handle the actual implementation of these capabilities.`;
                     return false;
                 } catch (error) {
                     console.error(`${AppState.logPrefix} Error handling tool intent:`, error);
-                    addToConversationLog(`I'm sorry, I encountered an error while trying to ${toolIntent.action} ${toolIntent.tool}. Please try again.`, "ai");
+                    console.log(`${AppState.logPrefix} Tool error: ${error.message}`);
                     return true; // Return true to prevent normal conversation flow
                 }
             }
@@ -1127,7 +1103,6 @@ The system will handle the actual implementation of these capabilities.`;
                 // Check if the response is negative
                 if (negativeResponses.some(response => cleanTranscript.includes(response))) {
                     console.log(`${AppState.logPrefix} Detected negative response: "${cleanTranscript}"`);
-                    addToConversationLog("I've canceled that action. Is there anything else you'd like me to do?", "ai");
                     hideTool();
                     AppState.pendingToolAction = null;
                     return true;
@@ -1156,7 +1131,6 @@ The system will handle the actual implementation of these capabilities.`;
                                 await new Promise(resolve => setTimeout(resolve, 1500));
 
                                 // Concise confirmation
-                                addToConversationLog(`Email sent to ${toolAction.params.to}.`, "ai");
                                 hideTool();
 
                                 // Deactivate the tool
@@ -1176,7 +1150,6 @@ The system will handle the actual implementation of these capabilities.`;
                                 await new Promise(resolve => setTimeout(resolve, 1500));
 
                                 // Concise confirmation with TTS
-                                addToConversationLog(`Event "${title}" added to calendar.`, "ai");
                                 hideTool();
 
                                 // Deactivate the tool
@@ -1186,7 +1159,6 @@ The system will handle the actual implementation of these capabilities.`;
                     }
                 } catch (error) {
                     console.error(`${AppState.logPrefix} Error executing tool action:`, error);
-                    addToConversationLog("Action failed. Please try again.", "ai");
                     hideTool();
 
                     // Make sure to deactivate the tool on error
@@ -1194,53 +1166,384 @@ The system will handle the actual implementation of these capabilities.`;
                 }
             }
 
-            // Placeholder tool handlers - you can implement these as needed
+            // Email Tool Handlers
             async function handleEmailCompose(params, transcript) {
-                console.log(`${AppState.logPrefix} Handling email compose tool`);
-                showTool("Email");
-                // For now, just show a simple message
-                document.getElementById('toolContent').innerHTML = `
-                    <p>Email composition tool would appear here.</p>
-                    <p>Recipient: ${params.recipient}</p>
-                    <p>Subject: ${params.subject}</p>
-                `;
+                try {
+                    console.log(`${AppState.logPrefix} Handling email compose tool`);
+                    // Set the active tool
+                    AppState.activateTool("email");
+                    
+                    // Determine recipient email format
+                    let recipientName = params.recipient || "Recipient";
+                    let recipientEmail = `${recipientName.toLowerCase().replace(/\s+/g, '.')}@example.com`;
+                    
+                    // Generate a basic email template
+                    const emailContent = `
+                        <div class="email-form" style="background: rgba(255, 255, 255, 0.03); padding: 30px; border-radius: 24px; border: 1px solid rgba(255, 255, 255, 0.1); backdrop-filter: blur(20px);">
+                            <h4 style="margin: 0 0 24px 0; color: var(--accent-color); font-size: 1.2rem; font-weight: 600; text-align: center;">Compose New Email</h4>
+                            <div class="email-field" style="margin-bottom: 20px;">
+                                <label for="email-to" style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--text-color); font-size: 14px;">To:</label>
+                                <input type="text" id="email-to" value="${recipientEmail}" style="width: 100%; padding: 14px 16px; border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 12px; font-family: inherit; font-size: 15px; background: rgba(255, 255, 255, 0.05); color: var(--text-color); transition: all 0.2s ease;">
+                            </div>
+                            <div class="email-field" style="margin-bottom: 20px;">
+                                <label for="email-subject" style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--text-color); font-size: 14px;">Subject:</label>
+                                <input type="text" id="email-subject" value="${params.subject || 'Meeting Follow-up'}" style="width: 100%; padding: 14px 16px; border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 12px; font-family: inherit; font-size: 15px; background: rgba(255, 255, 255, 0.05); color: var(--text-color); transition: all 0.2s ease;">
+                            </div>
+                            <div class="email-field" style="margin-bottom: 20px;">
+                                <label for="email-body" style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--text-color); font-size: 14px;">Message:</label>
+                                <textarea id="email-body" style="width: 100%; padding: 14px 16px; border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 12px; font-family: inherit; font-size: 15px; background: rgba(255, 255, 255, 0.05); color: var(--text-color); transition: all 0.2s ease; min-height: 120px; resize: vertical;">Hello ${recipientName},
+
+I hope this email finds you well. I wanted to follow up on our recent conversation about the project.
+
+Let me know if you have any questions.
+
+Best regards,
+[Your Name]</textarea>
+                            </div>
+                            <div class="tool-buttons" style="display: flex; justify-content: center; gap: 16px; margin-top: 30px;">
+                                <button class="tool-button secondary" id="email-cancel" style="padding: 12px 28px; border-radius: 12px; font-weight: 500; cursor: pointer; transition: all 0.2s ease; min-width: 120px; margin: 0; font-size: 14px; background: rgba(255, 255, 255, 0.1); color: var(--text-color); border: 1px solid rgba(255, 255, 255, 0.2);">Cancel</button>
+                                <button class="tool-button primary" id="email-send" style="padding: 12px 28px; border-radius: 12px; font-weight: 500; cursor: pointer; transition: all 0.2s ease; min-width: 120px; margin: 0; font-size: 14px; background: var(--accent-color); color: white; border: none; box-shadow: 0 4px 15px rgba(80, 179, 162, 0.3);">Send Email</button>
+                            </div>
+                        </div>
+                    `;
+                    
+                    // Show the tool with the email content
+                    showTool("Email");
+                    document.getElementById('toolContent').innerHTML = emailContent;
+                    
+                    // Add event listeners
+                    document.getElementById('email-send').addEventListener('click', async () => {
+                        // Get updated values from the form
+                        const to = document.getElementById('email-to').value;
+                        const subject = document.getElementById('email-subject').value;
+                        const body = document.getElementById('email-body').value;
+                        
+                        AppState.pendingToolAction = {
+                            tool: "email",
+                            action: "send",
+                            params: { to, subject, body }
+                        };
+                        
+                        // Brief confirmation request via TTS
+                        await processAIResponseTTS(`Send email to ${to}?`);
+                    });
+                    
+                    document.getElementById('email-cancel').addEventListener('click', async () => {
+                        hideTool();
+                        await processAIResponseTTS("Email draft canceled.");
+                        // Deactivate the tool when canceled
+                        AppState.deactivateTool();
+                    });
+                    
+                } catch (error) {
+                    console.error(`${AppState.logPrefix} Error in handleEmailCompose:`, error);
+                    await processAIResponseTTS("Couldn't create email. Please try again.");
+                    
+                    // Make sure to hide the tool if there's an error
+                    try {
+                        hideTool();
+                    } catch (e) {
+                        console.error(`${AppState.logPrefix} Error hiding tool:`, e);
+                    }
+                    
+                    // Deactivate the tool on error
+                    AppState.deactivateTool();
+                }
             }
 
             async function handleEmailSummarize(params, transcript) {
-                console.log(`${AppState.logPrefix} Handling email summarize tool`);
-                showTool("Email Summary");
-                document.getElementById('toolContent').innerHTML = `
-                    <p>Email summary for ${params.count} recent emails would appear here.</p>
-                `;
+                try {
+                    // Set the active tool
+                    AppState.activateTool("email");
+                    
+                    // Number of emails to summarize
+                    const count = params.count || 3;
+                    
+                    // Generate dummy email summaries
+                    let emailContent = `
+                        <div class="email-list" style="background: rgba(255, 255, 255, 0.03); padding: 30px; border-radius: 24px; border: 1px solid rgba(255, 255, 255, 0.1); backdrop-filter: blur(20px);">
+                            <h4 style="margin: 0 0 24px 0; color: var(--accent-color); font-size: 1.2rem; font-weight: 600; text-align: center;">Recent Emails (${count})</h4>
+                    `;
+                    
+                    // Sample email data
+                    const sampleEmails = [
+                        {
+                            from: "john.doe@example.com",
+                            subject: "Project Status Update",
+                            date: "Today, 10:30 AM",
+                            preview: "The latest project milestones have been completed ahead of schedule. We're now moving into the testing phase and need your feedback on the current implementation."
+                        },
+                        {
+                            from: "marketing@company.com",
+                            subject: "Marketing Campaign Results",
+                            date: "Yesterday, 4:15 PM",
+                            preview: "The Q3 marketing campaign exceeded expectations with a 22% increase in engagement. Key metrics attached in the report show significant growth in all target demographics."
+                        },
+                        {
+                            from: "support@service.com",
+                            subject: "Your Support Ticket #45678",
+                            date: "Jan 15, 2:45 PM",
+                            preview: "Your recent support request has been resolved. The technical team implemented the solution and would appreciate your feedback on the service provided."
+                        }
+                    ];
+                    
+                    // Add emails to the content
+                    for (let i = 0; i < Math.min(count, sampleEmails.length); i++) {
+                        const email = sampleEmails[i];
+                        emailContent += `
+                            <div class="email-item" style="background: rgba(255, 255, 255, 0.05); padding: 20px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.1); margin-bottom: 16px; transition: all 0.2s ease;">
+                                <div class="email-item-header" style="display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 13px; color: var(--accent-color); font-weight: 500;">
+                                    <span>${email.from}</span>
+                                    <span>${email.date}</span>
+                                </div>
+                                <div class="email-item-subject" style="font-weight: 600; margin-bottom: 8px; color: var(--text-color); font-size: 15px;">${email.subject}</div>
+                                <div class="email-item-preview" style="color: rgba(255, 255, 255, 0.7); line-height: 1.5; font-size: 14px;">${email.preview}</div>
+                            </div>
+                        `;
+                    }
+                    
+                    emailContent += `
+                        <div class="tool-buttons" style="display: flex; justify-content: center; gap: 16px; margin-top: 30px;">
+                            <button class="tool-button secondary" id="email-refresh" style="padding: 12px 28px; border-radius: 12px; font-weight: 500; cursor: pointer; transition: all 0.2s ease; min-width: 120px; margin: 0; font-size: 14px; background: rgba(255, 255, 255, 0.1); color: var(--text-color); border: 1px solid rgba(255, 255, 255, 0.2);">Refresh</button>
+                            <button class="tool-button secondary" id="email-close" style="padding: 12px 28px; border-radius: 12px; font-weight: 500; cursor: pointer; transition: all 0.2s ease; min-width: 120px; margin: 0; font-size: 14px; background: rgba(255, 255, 255, 0.1); color: var(--text-color); border: 1px solid rgba(255, 255, 255, 0.2);">Close</button>
+                        </div>
+                    </div>`;
+                    
+                    // Show the tool with the email summaries
+                    showTool("Email Summary");
+                    document.getElementById('toolContent').innerHTML = emailContent;
+                    
+                    // Add event listener for close button
+                    document.getElementById('email-close').addEventListener('click', () => {
+                        hideTool();
+                        // Deactivate the tool when closed
+                        AppState.deactivateTool();
+                    });
+                    
+                    // Add event listener for refresh button (placeholder)
+                    document.getElementById('email-refresh').addEventListener('click', () => {
+                        // This would typically refresh the email list
+                        // For now, just acknowledge the click
+                        console.log("Refreshing email list");
+                    });
+                    
+                    // Brief verbal acknowledgment
+                    await processAIResponseTTS(`Found ${count} recent emails.`);
+                    
+                } catch (error) {
+                    console.error(`${AppState.logPrefix} Error in handleEmailSummarize:`, error);
+                    await processAIResponseTTS("Couldn't retrieve your emails. Please try again.");
+                    
+                    // Make sure to hide the tool if there's an error
+                    try {
+                        hideTool();
+                    } catch (e) {
+                        console.error(`${AppState.logPrefix} Error hiding tool:`, e);
+                    }
+                    
+                    // Deactivate the tool on error
+                    AppState.deactivateTool();
+                }
             }
 
+            // Calendar Tool Handlers
             async function handleCalendarCheck(params, transcript) {
-                console.log(`${AppState.logPrefix} Handling calendar check tool`);
-                showTool("Calendar");
-                document.getElementById('toolContent').innerHTML = `
-                    <p>Calendar for ${params.date} would appear here.</p>
-                `;
+                try {
+                    // Set the active tool
+                    AppState.activateTool("calendar");
+
+                    // Generate a basic calendar view
+                    const date = params.date === "today" ? new Date() : new Date();
+                    const month = date.toLocaleString('default', { month: 'long' });
+                    const year = date.getFullYear();
+
+                    const dateStr = params.date === "today" ? "Today" : params.date;
+
+                    let calendarContent = `
+                        <div class="calendar-view" style="background: rgba(255, 255, 255, 0.03); padding: 30px; border-radius: 24px; border: 1px solid rgba(255, 255, 255, 0.1); backdrop-filter: blur(20px);">
+                            <div class="calendar-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">
+                                <h4 style="color: var(--accent-color); font-weight: 600; margin: 0;">${month} ${year}</h4>
+                            </div>
+                            <div class="calendar-days">
+                                <h5 style="color: var(--text-color); margin-bottom: 16px;">${dateStr}'s Schedule (${date.toLocaleDateString()})</h5>
+                                <div class="calendar-event" style="background: rgba(255, 255, 255, 0.05); border-left: 4px solid var(--accent-color); padding: 16px; margin: 12px 0; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.1); transition: all 0.2s ease;">
+                                    <strong style="color: var(--text-color);">9:00 AM - 10:00 AM</strong>: <span style="color: rgba(255, 255, 255, 0.8);">Team Standup</span>
+                                </div>
+                                <div class="calendar-event" style="background: rgba(255, 255, 255, 0.05); border-left: 4px solid var(--accent-color); padding: 16px; margin: 12px 0; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.1); transition: all 0.2s ease;">
+                                    <strong style="color: var(--text-color);">1:00 PM - 2:30 PM</strong>: <span style="color: rgba(255, 255, 255, 0.8);">Project Planning</span>
+                                </div>
+                                <div class="calendar-event" style="background: rgba(255, 255, 255, 0.05); border-left: 4px solid var(--accent-color); padding: 16px; margin: 12px 0; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.1); transition: all 0.2s ease;">
+                                    <strong style="color: var(--text-color);">4:00 PM - 5:00 PM</strong>: <span style="color: rgba(255, 255, 255, 0.8);">Client Call</span>
+                                </div>
+                                
+                                <h5 class="free-time-header" style="margin-top: 24px; margin-bottom: 12px; color: var(--accent-color); font-weight: 600; border-bottom: 1px solid rgba(255, 255, 255, 0.1); padding-bottom: 8px;">Free Time Available:</h5>
+                                <div class="free-time-slot" style="background: rgba(80, 179, 162, 0.1); border-left: 4px solid var(--accent-color); padding: 12px 16px; margin: 8px 0; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.1); font-weight: 500; color: var(--accent-color);">
+                                    <span>10:00 AM - 1:00 PM</span>
+                                </div>
+                                <div class="free-time-slot" style="background: rgba(80, 179, 162, 0.1); border-left: 4px solid var(--accent-color); padding: 12px 16px; margin: 8px 0; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.1); font-weight: 500; color: var(--accent-color);">
+                                    <span>2:30 PM - 4:00 PM</span>
+                                </div>
+                                <div class="free-time-slot" style="background: rgba(80, 179, 162, 0.1); border-left: 4px solid var(--accent-color); padding: 12px 16px; margin: 8px 0; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.1); font-weight: 500; color: var(--accent-color);">
+                                    <span>After 5:00 PM</span>
+                                </div>
+                            </div>
+                            <div class="tool-buttons" style="display: flex; justify-content: center; gap: 16px; margin-top: 30px;">
+                                <button class="tool-button secondary" id="prev-day" style="padding: 12px 28px; border-radius: 12px; font-weight: 500; cursor: pointer; transition: all 0.2s ease; min-width: 120px; margin: 0; font-size: 14px; background: rgba(255, 255, 255, 0.1); color: var(--text-color); border: 1px solid rgba(255, 255, 255, 0.2);">Previous Day</button>
+                                <button class="tool-button secondary" id="calendar-close" style="padding: 12px 28px; border-radius: 12px; font-weight: 500; cursor: pointer; transition: all 0.2s ease; min-width: 120px; margin: 0; font-size: 14px; background: rgba(255, 255, 255, 0.1); color: var(--text-color); border: 1px solid rgba(255, 255, 255, 0.2);">Close</button>
+                                <button class="tool-button primary" id="next-day" style="padding: 12px 28px; border-radius: 12px; font-weight: 500; cursor: pointer; transition: all 0.2s ease; min-width: 120px; margin: 0; font-size: 14px; background: var(--accent-color); color: white; border: none; box-shadow: 0 4px 15px rgba(80, 179, 162, 0.3);">Next Day</button>
+                            </div>
+                        </div>
+                    `;
+
+                    // Show the tool with the calendar content
+                    showTool("Calendar");
+                    document.getElementById('toolContent').innerHTML = calendarContent;
+
+                    // Add event listener for close button
+                    document.getElementById('calendar-close').addEventListener('click', () => {
+                        hideTool();
+                        AppState.deactivateTool();
+                    });
+
+                    // Add event listeners for day navigation (placeholder functionality)
+                    document.getElementById('prev-day').addEventListener('click', () => {
+                        console.log("Viewing previous day");
+                    });
+
+                    document.getElementById('next-day').addEventListener('click', () => {
+                        console.log("Viewing next day");
+                    });
+
+                    // Send a brief TTS response
+                    await processAIResponseTTS(`Checking your calendar for ${params.date === "today" ? "today" : params.date}.`);
+
+                } catch (error) {
+                    console.error(`${AppState.logPrefix} Error in handleCalendarCheck:`, error);
+                    await processAIResponseTTS("I couldn't access your calendar. Please try again.");
+
+                    // Make sure to hide the tool if there's an error
+                    try {
+                        hideTool();
+                    } catch (e) {
+                        console.error(`${AppState.logPrefix} Error hiding tool:`, e);
+                    }
+
+                    // Deactivate the tool
+                    AppState.deactivateTool();
+                }
             }
 
             async function handleCalendarAdd(params, transcript) {
-                console.log(`${AppState.logPrefix} Handling calendar add tool`);
-                showTool("Calendar Event");
-                document.getElementById('toolContent').innerHTML = `
-                    <p>Add calendar event form would appear here.</p>
-                    <p>Title: ${params.title}</p>
-                    <p>Date: ${params.date}</p>
-                    <p>Time: ${params.time}</p>
-                `;
+                try {
+                    // Set the active tool
+                    AppState.activateTool("calendar");
+
+                    // Generate a form to add an event
+                    const today = new Date().toISOString().split('T')[0];
+
+                    let eventContent = `
+                        <div class="calendar-add-form" style="background: rgba(255, 255, 255, 0.03); padding: 30px; border-radius: 24px; border: 1px solid rgba(255, 255, 255, 0.1); backdrop-filter: blur(20px);">
+                            <h4 style="margin: 0 0 24px 0; color: var(--accent-color); font-size: 1.2rem; font-weight: 600; text-align: center;">Add New Calendar Event</h4>
+                            <div class="calendar-form-fields">
+                                <div class="email-field" style="margin-bottom: 20px;">
+                                    <label for="event-title" style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--text-color); font-size: 14px;">Event Title:</label>
+                                    <input type="text" id="event-title" value="${params.title || 'New Meeting'}" style="width: 100%; padding: 14px 16px; border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 12px; font-family: inherit; font-size: 15px; background: rgba(255, 255, 255, 0.05); color: var(--text-color); transition: all 0.2s ease;">
+                                </div>
+                                <div class="email-field" style="margin-bottom: 20px;">
+                                    <label for="event-date" style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--text-color); font-size: 14px;">Date:</label>
+                                    <input type="date" id="event-date" value="${today}" style="width: 100%; padding: 14px 16px; border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 12px; font-family: inherit; font-size: 15px; background: rgba(255, 255, 255, 0.05); color: var(--text-color); transition: all 0.2s ease;">
+                                </div>
+                                <div class="email-field" style="margin-bottom: 20px;">
+                                    <label for="event-time" style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--text-color); font-size: 14px;">Start Time:</label>
+                                    <input type="time" id="event-time" value="${params.time || '10:00'}" style="width: 100%; padding: 14px 16px; border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 12px; font-family: inherit; font-size: 15px; background: rgba(255, 255, 255, 0.05); color: var(--text-color); transition: all 0.2s ease;">
+                                </div>
+                                <div class="email-field" style="margin-bottom: 20px;">
+                                    <label for="event-duration" style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--text-color); font-size: 14px;">Duration:</label>
+                                    <select id="event-duration" style="width: 100%; padding: 14px 16px; border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 12px; font-family: inherit; font-size: 15px; background: rgba(255, 255, 255, 0.05); color: var(--text-color); transition: all 0.2s ease;">
+                                        <option value="30">30 minutes</option>
+                                        <option value="60" selected>1 hour</option>
+                                        <option value="90">1.5 hours</option>
+                                        <option value="120">2 hours</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="tool-buttons" style="display: flex; justify-content: center; gap: 16px; margin-top: 30px;">
+                                <button class="tool-button secondary" id="event-cancel" style="padding: 12px 28px; border-radius: 12px; font-weight: 500; cursor: pointer; transition: all 0.2s ease; min-width: 120px; margin: 0; font-size: 14px; background: rgba(255, 255, 255, 0.1); color: var(--text-color); border: 1px solid rgba(255, 255, 255, 0.2);">Cancel</button>
+                                <button class="tool-button primary" id="event-create" style="padding: 12px 28px; border-radius: 12px; font-weight: 500; cursor: pointer; transition: all 0.2s ease; min-width: 120px; margin: 0; font-size: 14px; background: var(--accent-color); color: white; border: none; box-shadow: 0 4px 15px rgba(80, 179, 162, 0.3);">Create Event</button>
+                            </div>
+                        </div>
+                    `;
+
+                    // Show the tool with the event form
+                    showTool("Calendar Event");
+                    document.getElementById('toolContent').innerHTML = eventContent;
+
+                    // Add event listeners
+                    document.getElementById('event-create').addEventListener('click', async () => {
+                        // Get updated values from the form
+                        const title = document.getElementById('event-title').value;
+                        const date = document.getElementById('event-date').value;
+                        const time = document.getElementById('event-time').value;
+                        const dateObj = new Date(date);
+                        const formattedDate = dateObj.toLocaleDateString();
+
+                        AppState.pendingToolAction = {
+                            tool: "calendar",
+                            action: "create",
+                            params: {
+                                title,
+                                date: formattedDate,
+                                time
+                            }
+                        };
+
+                        // This verbal prompt is brief and asks for confirmation
+                        await processAIResponseTTS(`Create "${title}" on ${formattedDate}?`);
+                    });
+
+                    document.getElementById('event-cancel').addEventListener('click', async () => {
+                        hideTool();
+                        await processAIResponseTTS("Event creation canceled.");
+                        // Make sure to deactivate the tool when canceling
+                        AppState.deactivateTool();
+                    });
+
+                    // Brief TTS response to acknowledge the request
+                    await processAIResponseTTS(`Creating a calendar event. Please review the details.`);
+
+                } catch (error) {
+                    console.error(`${AppState.logPrefix} Error in handleCalendarAdd:`, error);
+                    await processAIResponseTTS("I couldn't create your calendar event. Please try again.");
+
+                    // Make sure to hide the tool if there's an error
+                    try {
+                        hideTool();
+                    } catch (e) {
+                        console.error(`${AppState.logPrefix} Error hiding tool:`, e);
+                    }
+
+                    // Deactivate the tool
+                    AppState.deactivateTool();
+                }
             }
 
             // Tool UI functions
             function showTool(title) {
                 const toolSidebar = document.getElementById('toolSidebar');
                 const toolTitle = document.getElementById('toolTitle');
+                const mainPanel = document.querySelector('.main-interface-panel');
 
                 if (toolSidebar && toolTitle) {
                     toolTitle.textContent = title || 'Tool';
-                    toolSidebar.style.width = '400px';
+                    // Slide in from right with proper width and opacity
+                    toolSidebar.style.width = '450px';
+                    toolSidebar.style.opacity = '1';
+                    
+                    // Add border radius to main panel for beautiful separation
+                    if (mainPanel) {
+                        mainPanel.style.borderRadius = '24px';
+                    }
+                    
                     document.getElementById('toolContent').innerHTML = '';
                 } else {
                     console.error(`${AppState.logPrefix} Tool UI elements not found`);
@@ -1249,9 +1552,18 @@ The system will handle the actual implementation of these capabilities.`;
 
             function hideTool() {
                 const toolSidebar = document.getElementById('toolSidebar');
+                const mainPanel = document.querySelector('.main-interface-panel');
 
                 if (toolSidebar) {
+                    // Slide out to the right
                     toolSidebar.style.width = '0';
+                    toolSidebar.style.opacity = '0';
+                    
+                    // Remove border radius from main panel when tool is hidden
+                    if (mainPanel) {
+                        mainPanel.style.borderRadius = '0';
+                    }
+                    
                     document.getElementById('toolContent').innerHTML = '';
                 } else {
                     console.error(`${AppState.logPrefix} Tool UI element not found`);
