@@ -193,7 +193,8 @@
             const messageContainer = document.getElementById('messageContainer');
             const responseMessage = document.getElementById('responseMessage');
             
-            // Create a dedicated state management object similar to audio_recorder.html
+            // Create a dedicated state management object to centralize our application state
+            // This will help us keep track of state across different function calls
             const AppState = {
                 // Recording state
                 isRecording: false,
@@ -202,8 +203,7 @@
                 silenceStart: null,
                 hasDetectedAudio: false,
                 significantSpeechDetected: false,
-                isListening: false,
-                
+
                 // Audio resources
                 mediaRecorder: null,
                 audioChunks: [],
@@ -211,15 +211,33 @@
                 audioContext: null,
                 analyser: null,
                 source: null,
-                
+
                 // Timers and tracking
                 continuousRecordingTimer: null,
                 lastProcessedTime: 0,
-                
+
+                // Conversation state
+                conversationActive: false,
+
+                // Tool state
+                activeTool: null, // Current active tool
+                pendingToolAction: null, // Action waiting for confirmation
+
                 // Debug
-                logPrefix: '🎤 VoiceUI:',
-                
-                // Methods for real-time conversation
+                logPrefix: '🎙️ VoiceAssistant:',
+
+                // Methods for state management
+                startConversation() {
+                    this.conversationActive = true;
+                    console.log(`${this.logPrefix} Conversation started`);
+                },
+
+                endConversation() {
+                    this.conversationActive = false;
+                    this.resetAudioState();
+                    console.log(`${this.logPrefix} Conversation ended`);
+                },
+
                 resetAudioState() {
                     this.isRecording = false;
                     this.isProcessing = false;
@@ -230,26 +248,51 @@
                     this.audioChunks = [];
                     console.log(`${this.logPrefix} Audio state reset`);
                 },
-                
+
+                activateTool(toolName) {
+                    this.activeTool = toolName;
+                    console.log(`${this.logPrefix} Tool activated: ${toolName}`);
+                },
+
+                deactivateTool() {
+                    this.activeTool = null;
+                    this.pendingToolAction = null;
+                    console.log(`${this.logPrefix} Tool deactivated`);
+                },
+
                 debug() {
-                    console.log(`${this.logPrefix} State: Recording: ${this.isRecording}, Processing: ${this.isProcessing}, Active: ${this.isListening}`);
+                    console.log(`${this.logPrefix} State: 
+                        Recording: ${this.isRecording},
+                        Processing: ${this.isProcessing}, 
+                        Conversation: ${this.conversationActive},
+                        ActiveTool: ${this.activeTool}
+                    `);
                 }
             };
-            
+
+            // Audio processing variables - using AppState now for most of these
+            let volumeData = [];
+            let pauseTimeout = null;
+
+            // Settings with default values
+            let settings = {
+                silenceThreshold: 15,
+                pauseThreshold: 2.0, // Silence pause threshold in seconds
+                echoCancel: true,
+                noiseSuppress: true,
+                continuousMode: true,
+                minAudioSize: 10000, // Minimum audio size to consider as valid speech (bytes)
+                significantAudioThreshold: 25 // Threshold for significant audio (higher than silence threshold)
+            };
+
             // Create cosmic particles
             createCosmicParticles();
             
-            // Microphone button click handler - modified for real-time conversation
+            // Microphone button click handler
             micButton.addEventListener('click', function() {
-                console.log(`${AppState.logPrefix} Mic button clicked, current state: isListening=${AppState.isListening}, isRecording=${AppState.isRecording}, isProcessing=${AppState.isProcessing}`);
+                console.log(`${AppState.logPrefix} Mic button clicked`);
                 
-                if (AppState.isProcessing) {
-                    console.log(`${AppState.logPrefix} Ignoring mic click - currently processing`);
-                    return; // Prevent multiple clicks during processing
-                }
-                
-                if (AppState.isListening || AppState.isRecording) {
-                    console.log(`${AppState.logPrefix} User clicked to stop recording`);
+                if (AppState.isRecording) {
                     stopRecording();
                     // Change microphone icon to original icon when stopping
                     micButton.innerHTML = `
@@ -261,71 +304,103 @@
                         </svg>
                     `;
                 } else {
-                    startRecording();
+                    startConversation();
                     // Change microphone icon to stop icon when recording
                     micButton.innerHTML = `
                         <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <rect x="6" y="6" width="12" height="12" rx="2" ry="2"></rect>
                         </svg>
                     `;
-                    micButton.classList.add('recording');
                 }
             });
-            
-            // Configuration settings for voice assistant
-            const settings = {
-                silenceThreshold: 20,  // Volume level below which is considered silence (increased)
-                significantAudioThreshold: 35, // Threshold for significant speech detection (increased)
-                speechDurationThreshold: 0.5, // Minimum seconds of continuous speech required
-                pauseThreshold: 1.5,   // Seconds of silence before processing
-                minAudioSize: 2500,    // Minimum audio blob size to process (increased)
-                continuousMode: true,  // Whether to automatically resume recording
-                echoCancel: true,      // Whether to use echo cancellation
-                noiseSuppress: true,   // Whether to use noise suppression
-                preventFeedbackLoop: true, // Prevent AI responses from being re-processed
-                isSpeaking: false      // Flag to indicate when TTS is playing (prevent recording during playback)
-            };
-            
-            // Initialize conversation history management
-            let lastProcessedTranscript = '';
-            let processingUserInput = false;
-            let continuousSpeechDuration = 0;
-            let significantSpeechTimer = null;
-            let lastSignificantSpeechTime = null;
-            
-            // Add close conversation button functionality
-            document.getElementById('closeConversation').addEventListener('click', () => {
-                messageContainer.style.display = 'none';
-                messageContainer.innerHTML = '';
-                const responseDiv = document.createElement('div');
-                responseDiv.id = 'responseMessage';
-                responseDiv.style.position = 'absolute';
-                responseDiv.style.left = '-9999px';
-                responseDiv.style.visibility = 'hidden';
-                messageContainer.appendChild(responseDiv);
-            });
 
-            // Initialize audio recording capabilities with continuous mode
+            // Start the conversation session
+            function startConversation() {
+                // Update state
+                AppState.startConversation();
+
+                // Initialize audio components
+                initAudioContext();
+                statusText.textContent = "Starting microphone...";
+
+                // Begin recording
+                startRecording();
+            }
+
+            // End the conversation session
+            function endConversation() {
+                console.log(`${AppState.logPrefix} Ending conversation`);
+
+                // Stop current recording if active
+                if (AppState.isRecording) {
+                    stopRecording();
+                }
+
+                // Clear any pending timers
+                if (pauseTimeout) {
+                    clearTimeout(pauseTimeout);
+                    pauseTimeout = null;
+                }
+
+                // Clear continuous recording timer
+                if (AppState.continuousRecordingTimer) {
+                    clearInterval(AppState.continuousRecordingTimer);
+                    AppState.continuousRecordingTimer = null;
+                }
+
+                // Update application state
+                AppState.endConversation();
+
+                // Update UI
+                statusText.textContent = "Ready to start...";
+            }
+
+            // Initialize AudioContext (for volume analysis)
+            function initAudioContext() {
+                try {
+                    // Initialize or reset
+                    if (AppState.audioContext) {
+                        AppState.audioContext.close();
+                    }
+
+                    window.AudioContext = window.AudioContext || window.webkitAudioContext;
+                    AppState.audioContext = new AudioContext();
+                    AppState.analyser = AppState.audioContext.createAnalyser();
+                    AppState.analyser.fftSize = 256;
+
+                    console.log(`${AppState.logPrefix} Audio context initialized successfully`);
+                } catch (e) {
+                    console.error(`${AppState.logPrefix} AudioContext not supported or error initializing:`, e);
+                    statusText.textContent = "Audio features not supported in your browser";
+                }
+            }
+
+            // Start recording audio
             async function startRecording() {
                 if (AppState.isRecording) {
                     console.log(`${AppState.logPrefix} Already recording, not starting again`);
                     return;
                 }
-                
+
                 console.log(`${AppState.logPrefix} Starting recording...`);
                 AppState.debug();
-                
+
                 // Reset state variables
                 AppState.isRecording = true;
-                AppState.isListening = true;
                 AppState.pauseDetected = false;
                 AppState.silenceStart = null;
                 AppState.hasDetectedAudio = false;
                 AppState.significantSpeechDetected = false;
                 AppState.audioChunks = [];
-                
+
                 try {
-                    // Request microphone access with constraints for better quality
+                    // Make sure audio context is initialized
+                    if (!AppState.audioContext || !AppState.analyser) {
+                        console.log(`${AppState.logPrefix} Re-initializing audio context`);
+                        initAudioContext();
+                    }
+
+                    // Create constraints with echo cancellation and noise suppression
                     const constraints = {
                         audio: {
                             echoCancellation: settings.echoCancel,
@@ -333,139 +408,39 @@
                             autoGainControl: true
                         }
                     };
-                    
+
                     statusText.textContent = "Accessing microphone...";
                     const stream = await navigator.mediaDevices.getUserMedia(constraints);
-                    
-                    // Start animation
-                    startListening();
-                    
-                    // Initialize audio context for visualization and volume monitoring
-                    AppState.audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                    AppState.analyser = AppState.audioContext.createAnalyser();
-                    AppState.analyser.fftSize = 256;
-                    
+
                     // Start media recorder with higher bitrate for better quality
                     const options = { mimeType: 'audio/webm;codecs=opus', audioBitsPerSecond: 128000 };
                     AppState.mediaRecorder = new MediaRecorder(stream, options);
-                    
-                    // Set up audio analysis for silence detection
-                    AppState.source = AppState.audioContext.createMediaStreamSource(stream);
-                    AppState.source.connect(AppState.analyser);
-                    
-                    // Define volume monitoring function for silence detection
-                    function monitorVolume() {
-                        if (!AppState.analyser || !AppState.isRecording) {
-                            console.log(`${AppState.logPrefix} Cannot monitor volume - analyser or recording state invalid`);
-                            return;
+
+                    // Set up audio analysis for pause detection
+                    if (AppState.audioContext && AppState.analyser) {
+                        // Disconnect previous source if exists
+                        if (AppState.source) {
+                            AppState.source.disconnect();
                         }
+
+                        AppState.source = AppState.audioContext.createMediaStreamSource(stream);
+                        AppState.source.connect(AppState.analyser);
+
+                        // Start monitoring volume
+                        monitorVolume();
                         
-                        // Skip volume monitoring when TTS is playing to prevent feedback
-                        if (settings.isSpeaking) {
-                            requestAnimationFrame(monitorVolume);
-                            return;
-                        }
-                        
-                        const bufferLength = AppState.analyser.frequencyBinCount;
-                        const volumeData = new Uint8Array(bufferLength);
-                        AppState.analyser.getByteFrequencyData(volumeData);
-                        
-                        // Calculate average volume level
-                        let sum = 0;
-                        for (let i = 0; i < bufferLength; i++) {
-                            sum += volumeData[i];
-                        }
-                        const avg = sum / bufferLength;
-                        
-                        // Check if we've detected significant speech
-                        if (avg > settings.significantAudioThreshold) {
-                            // Mark when we first detected significant speech
-                            if (!lastSignificantSpeechTime) {
-                                lastSignificantSpeechTime = Date.now();
-                                continuousSpeechDuration = 0;
-                            } else {
-                                // Calculate how long we've had significant speech
-                                continuousSpeechDuration = (Date.now() - lastSignificantSpeechTime) / 1000;
-                            }
-                            
-                            // Only count as speech if it's been significant for long enough
-                            // This helps filter out short noise bursts and TTS audio feedback
-                            if (continuousSpeechDuration >= settings.speechDurationThreshold && !AppState.significantSpeechDetected) {
-                                console.log(`${AppState.logPrefix} Significant speech detected for ${continuousSpeechDuration.toFixed(2)}s - volume level: ${avg.toFixed(1)}`);
-                                AppState.significantSpeechDetected = true;
-                            }
-                            
-                            // Reset silence start when speech is detected
-                            AppState.silenceStart = null;
-                        } else {
-                            // Reset the significant speech timer if volume drops below threshold
-                            if (lastSignificantSpeechTime && avg < settings.silenceThreshold) {
-                                lastSignificantSpeechTime = null;
-                                continuousSpeechDuration = 0;
-                            }
-                        }
-                        
-                        // Regular audio detection for visualization
-                        if (avg > settings.silenceThreshold) {
-                            AppState.hasDetectedAudio = true;
-                        }
-                        
-                        // Silence detection logic - only trigger processing if we had significant speech followed by silence
-                        if (AppState.significantSpeechDetected) {
-                            if (avg < settings.silenceThreshold) {
-                                // Start silence timer if not already started
-                                if (!AppState.silenceStart) {
-                                    AppState.silenceStart = Date.now();
-                                    console.log(`${AppState.logPrefix} Silence started after speech`);
-                                }
-                                
-                                // Check if silence has lasted long enough to be a pause
-                                const silenceDuration = (Date.now() - AppState.silenceStart) / 1000;
-                                
-                                // Only process when:
-                                // 1. We've detected significant speech for minimum duration
-                                // 2. Followed by silence for the pause threshold duration
-                                // 3. We're not already processing
-                                // 4. Enough time has passed since last processing (to avoid rapid reprocessing)
-                                // 5. We're not currently playing TTS
-                                if (silenceDuration > settings.pauseThreshold && 
-                                    !AppState.pauseDetected && 
-                                    !AppState.isProcessing &&
-                                    !settings.isSpeaking &&
-                                    (Date.now() - AppState.lastProcessedTime > 3000)) {
-                                    
-                                    console.log(`${AppState.logPrefix} Processing after ${silenceDuration.toFixed(1)}s of silence following speech`);
-                                    AppState.pauseDetected = true;
-                                    pauseAndProcess();
-                                }
-                            } else {
-                                // Reset silence timer if sound detected again
-                                if (AppState.silenceStart) {
-                                    console.log(`${AppState.logPrefix} Silence interrupted - continuing to listen`);
-                                }
-                                AppState.silenceStart = null;
-                            }
-                        }
-                        
-                        // Continue monitoring as long as we're recording
-                        if (AppState.isRecording) {
-                            requestAnimationFrame(monitorVolume);
-                        } else {
-                            console.log(`${AppState.logPrefix} Volume monitoring stopped - recording ended`);
-                        }
+                        // Start animation
+                        startListening();
+                    } else {
+                        throw new Error("Audio context or analyser not initialized");
                     }
-                    
-                    // Start monitoring volume for silence detection
-                    monitorVolume();
-                    
-                    // Add event listeners for audio data
+
                     AppState.mediaRecorder.addEventListener('dataavailable', event => {
                         if (event.data.size > 0) {
                             AppState.audioChunks.push(event.data);
                         }
                     });
-                    
-                    // When recording stops, process the audio
+
                     AppState.mediaRecorder.addEventListener('stop', () => {
                         console.log(`${AppState.logPrefix} MediaRecorder stopped, chunks: ${AppState.audioChunks.length}`);
                         if (AppState.audioChunks.length > 0) {
@@ -476,100 +451,172 @@
                             }
                         }
                     });
-                    
-                    // Start recording in chunks of 100ms
-                    AppState.mediaRecorder.start(100);
+
+                    AppState.mediaRecorder.start(100); // Collect data in 100ms chunks
+                    micButton.classList.add('recording');
                     statusText.textContent = "Listening...";
-                    
+
                     // Start continuous recording timer if enabled
                     if (settings.continuousMode) {
                         startContinuousRecordingTimer();
                     }
-                    
-                    // Setup visualization animation
-                    function animate() {
-                        if (!AppState.isListening) return;
-                        
-                        const bufferLength = AppState.analyser.frequencyBinCount;
-                        const dataArray = new Uint8Array(bufferLength);
-                        AppState.analyser.getByteFrequencyData(dataArray);
-                        
-                        // Calculate average volume
-                        let sum = 0;
-                        for (let i = 0; i < bufferLength; i++) {
-                            sum += dataArray[i];
-                        }
-                        const average = sum / bufferLength;
-                        
-                        // Scale particles based on volume
-                        const particles = document.querySelectorAll('.particle');
-                        const scale = 1 + (average / 256) * 0.5; // Scale between 1 and 1.5
-                        
-                        // Make cosmos sphere pulsate based on audio level
-                        const pulseScale = 1 + (average / 256) * 0.1; // Subtle pulse effect
-                        cosmosSphere.style.transform = `scale(${pulseScale})`;
-                        
-                        particles.forEach(particle => {
-                            particle.style.transform = `scale(${scale})`;
-                        });
-                        
-                        requestAnimationFrame(animate);
-                    }
-                    
-                    animate();
-                    
-                } catch (err) {
-                    console.error(`${AppState.logPrefix} Error accessing microphone:`, err);
-                    alert('Error accessing microphone. Please ensure your microphone is connected and permissions are granted.');
-                    
+
+                } catch (error) {
+                    console.error(`${AppState.logPrefix} Error starting recording:`, error);
+                    statusText.textContent = "Error starting recording: " + error.message;
+
                     // Reset state on error
                     AppState.isRecording = false;
-                    AppState.isListening = false;
                 }
             }
-            
-            // Function to start continuous recording timer
+
+            // New function to handle continuous recording
             function startContinuousRecordingTimer() {
                 // Clear any existing timer
                 if (AppState.continuousRecordingTimer) {
                     clearInterval(AppState.continuousRecordingTimer);
                     AppState.continuousRecordingTimer = null;
                 }
-                
+
                 console.log(`${AppState.logPrefix} Continuous listening mode active - will process on speech followed by silence`);
             }
-            
+
+            // Stop recording
+            function stopRecording() {
+                console.log(`${AppState.logPrefix} Stopping recording`);
+
+                // Only stop if we have an active recorder
+                if (AppState.mediaRecorder && AppState.mediaRecorder.state !== 'inactive') {
+                    AppState.mediaRecorder.stop();
+                    AppState.mediaRecorder.stream.getTracks().forEach(track => track.stop());
+                }
+
+                AppState.isRecording = false;
+                AppState.conversationActive = false;
+                micButton.classList.remove('recording');
+
+                // Clear continuous recording timer
+                if (AppState.continuousRecordingTimer) {
+                    clearInterval(AppState.continuousRecordingTimer);
+                    AppState.continuousRecordingTimer = null;
+                }
+            }
+
+            // Monitor volume and detect silence
+            function monitorVolume() {
+                if (!AppState.analyser || !AppState.isRecording) {
+                    console.log(`${AppState.logPrefix} Cannot monitor volume - analyser or recording state invalid`);
+                    return;
+                }
+
+                const bufferLength = AppState.analyser.frequencyBinCount;
+                const volumeData = new Uint8Array(bufferLength);
+                AppState.analyser.getByteFrequencyData(volumeData);
+
+                // Calculate average volume level
+                let sum = 0;
+                for (let i = 0; i < bufferLength; i++) {
+                    sum += volumeData[i];
+                }
+                const avg = sum / bufferLength;
+
+                // Check if we've detected significant speech (using a higher threshold)
+                if (avg > settings.significantAudioThreshold) {
+                    if (!AppState.significantSpeechDetected) {
+                        console.log(`${AppState.logPrefix} Speech detected - volume level: ${avg.toFixed(1)}`);
+                    }
+                    AppState.significantSpeechDetected = true;
+                    // Reset silence start when speech is detected
+                    AppState.silenceStart = null;
+
+                    // Only log occasionally to reduce console spam
+                    if (Math.random() < 0.02) {
+                        console.log(`${AppState.logPrefix} Detected speech: ${avg.toFixed(2)}`);
+                    }
+                }
+
+                // Regular audio detection for visualization
+                if (avg > settings.silenceThreshold) {
+                    AppState.hasDetectedAudio = true;
+                }
+
+                // Silence detection logic - only trigger processing if we had significant speech followed by silence
+                if (AppState.significantSpeechDetected) {
+                    if (avg < settings.silenceThreshold) {
+                        // Start silence timer if not already started
+                        if (!AppState.silenceStart) {
+                            AppState.silenceStart = Date.now();
+                            console.log(`${AppState.logPrefix} Silence started after speech`);
+                        }
+
+                        // Check if silence has lasted long enough to be a pause
+                        const silenceDuration = (Date.now() - AppState.silenceStart) / 1000;
+
+                        // Update debug status more frequently during silence
+                        if (Math.random() < 0.1) {
+                            console.log(`${AppState.logPrefix} Silence duration: ${silenceDuration.toFixed(1)}s`);
+                        }
+
+                        // Only process when:
+                        // 1. We've detected significant speech
+                        // 2. Followed by silence for the pause threshold duration
+                        // 3. We're not already processing
+                        // 4. Enough time has passed since last processing
+                        if (silenceDuration > settings.pauseThreshold && !AppState.pauseDetected && !AppState.isProcessing &&
+                            (Date.now() - AppState.lastProcessedTime > 3000)) {
+
+                            console.log(`${AppState.logPrefix} Processing after ${silenceDuration.toFixed(1)}s of silence following speech`);
+                            AppState.pauseDetected = true;
+                            pauseAndProcess();
+                        }
+                    } else {
+                        // Reset silence timer if sound detected
+                        if (AppState.silenceStart) {
+                            console.log(`${AppState.logPrefix} Silence interrupted - continuing to listen`);
+                        }
+                        AppState.silenceStart = null;
+                    }
+                }
+
+                // Continue monitoring as long as we're recording
+                if (AppState.isRecording) {
+                    requestAnimationFrame(monitorVolume);
+                } else {
+                    console.log(`${AppState.logPrefix} Volume monitoring stopped - recording ended`);
+                }
+            }
+
             // Pause recording and process current audio
             function pauseAndProcess() {
                 console.log(`${AppState.logPrefix} Pausing to process audio`);
-                
+
                 if (!AppState.isRecording || AppState.isProcessing) {
                     console.log(`${AppState.logPrefix} Cannot pause - not recording or already processing`);
                     return;
                 }
-                
+
                 // Stop the current recorder to get the data
-                if (AppState.mediaRecorder && AppState.mediaRecorder.state !== 'inactive') {
-                    AppState.mediaRecorder.stop();
-                }
-                
+                const currentMediaRecorder = AppState.mediaRecorder;
+                currentMediaRecorder.stop();
+
                 statusText.textContent = "Processing your message...";
-                
+
                 // Update state
                 AppState.isRecording = false;
-                
+
                 // Store the callback on the window object so it can be accessed from anywhere
                 window.resumeRecordingCallback = resumeRecording;
             }
-            
-            // Resume recording function for continuous conversation
-            async function resumeRecording() {
+
+            // resumeRecording function - improved to fix visualization and silence detection
+            const resumeRecording = async () => {
                 console.log(`${AppState.logPrefix} Resuming recording callback triggered`);
-                
-                // Check if still in listening mode
-                if (AppState.isListening) {
-                    console.log(`${AppState.logPrefix} Resuming recording - still active`);
-                    
+                console.log(`${AppState.logPrefix} Conversation active: ${AppState.conversationActive}`);
+
+                // Important: Use AppState.conversationActive to determine if we should resume
+                if (AppState.conversationActive) {
+                    console.log(`${AppState.logPrefix} Resuming recording - conversation is active`);
+
                     try {
                         // Reset AppState for a fresh start with the new recording session
                         AppState.isRecording = false;
@@ -578,8 +625,9 @@
                         AppState.pauseDetected = false;
                         AppState.silenceStart = null;
                         AppState.audioChunks = [];
-                        
-                        // Request a fresh microphone stream
+
+                        // CRITICAL FIX: Instead of trying to reuse the old stream,
+                        // request a fresh microphone stream each time
                         const constraints = {
                             audio: {
                                 echoCancellation: settings.echoCancel,
@@ -587,21 +635,27 @@
                                 autoGainControl: true
                             }
                         };
-                        
+
                         console.log(`${AppState.logPrefix} Requesting fresh microphone stream`);
                         const stream = await navigator.mediaDevices.getUserMedia(constraints);
-                        
+
+                        // Reinitialize the audio context if needed
+                        if (!AppState.audioContext || !AppState.analyser) {
+                            console.log(`${AppState.logPrefix} Reinitializing audio context`);
+                            initAudioContext();
+                        }
+
                         // Start a new recorder with the fresh stream
                         const options = { mimeType: 'audio/webm;codecs=opus', audioBitsPerSecond: 128000 };
                         AppState.mediaRecorder = new MediaRecorder(stream, options);
-                        
+
                         // Set up event handlers again
                         AppState.mediaRecorder.addEventListener('dataavailable', event => {
                             if (event.data.size > 0) {
                                 AppState.audioChunks.push(event.data);
                             }
                         });
-                        
+
                         AppState.mediaRecorder.addEventListener('stop', () => {
                             if (AppState.audioChunks.length > 0) {
                                 AppState.audioBlob = new Blob(AppState.audioChunks, { type: 'audio/webm;codecs=opus' });
@@ -610,22 +664,23 @@
                                 }
                             }
                         });
-                        
+
                         // Set up audio analysis again with the fresh stream
                         if (AppState.audioContext && AppState.analyser) {
                             // Disconnect previous source if exists
                             if (AppState.source) {
                                 AppState.source.disconnect();
                             }
-                            
+
                             AppState.source = AppState.audioContext.createMediaStreamSource(stream);
                             AppState.source.connect(AppState.analyser);
-                            
+
                             // Start recording first, then visualization
                             AppState.mediaRecorder.start(100);
                             AppState.isRecording = true;
-                            
+
                             // Start monitoring volume with the fresh stream
+                            // Using setTimeout to ensure the recorder is fully started
                             setTimeout(() => {
                                 console.log(`${AppState.logPrefix} Starting volume monitoring`);
                                 monitorVolume();
@@ -633,201 +688,322 @@
                         } else {
                             throw new Error("Audio context or analyser not properly initialized");
                         }
-                        
+
+                        micButton.classList.add('recording');
                         statusText.textContent = "Listening...";
+
                         console.log(`${AppState.logPrefix} Successfully restarted recording with fresh stream`);
-                        
+
+                        // Debug state
+                        AppState.debug();
+
                     } catch (error) {
                         console.error(`${AppState.logPrefix} Error resuming recording:`, error);
                         statusText.textContent = "Error resuming: " + error.message;
+
+                        // Try to fully restart recording as fallback
+                        console.log(`${AppState.logPrefix} Falling back to complete restart`);
+                        setTimeout(startRecording, 1000);
                     }
                 } else {
                     console.log(`${AppState.logPrefix} Not resuming recording - conversation has ended`);
                 }
             };
-            
-            // Stop recording function
-            function stopRecording() {
-                if (!AppState.isRecording) {
-                    console.log(`${AppState.logPrefix} Cannot stop recording - not currently recording`);
+
+            // Process recorded audio - UPDATED VERSION
+            async function processAudio() {
+                if (!AppState.audioBlob || AppState.audioBlob.size === 0 || AppState.isProcessing) {
+                    console.log(`${AppState.logPrefix} Cannot process audio - no blob, empty blob, or already processing`);
                     return;
                 }
-                
-                console.log(`${AppState.logPrefix} Stopping recording...`);
-                
-                AppState.isRecording = false;
-                AppState.isListening = false;
-                
-                if (AppState.mediaRecorder && AppState.mediaRecorder.state !== 'inactive') {
-                    AppState.mediaRecorder.stop();
-                }
-                
-                // Clean up continuous recording timer if active
-                if (settings.continuousMode && AppState.continuousRecordingTimer) {
-                    clearTimeout(AppState.continuousRecordingTimer);
-                    AppState.continuousRecordingTimer = null;
-                }
-                
-                // Ensure UI shows recording has stopped
-                statusText.textContent = "Recording stopped";
-                stopListening();
-                
-                // Reset all state flags
-                window.resumeRecordingCallback = null;
-                AppState.significantSpeechDetected = false;
-                AppState.pauseDetected = false;
-                AppState.silenceStart = null;
-                lastSignificantSpeechTime = null;
-                continuousSpeechDuration = 0;
-            }
-            
-            async function processAudio() {
-                try {
-                    const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-                    const formData = new FormData();
-                    formData.append('audio', audioBlob);
-                    
-                    statusText.textContent = 'Processing...';
-                    statusText.classList.add('active');
-                    
-                    // Send to backend for processing
-                    const response = await fetch('/api/stt', {
-                        method: 'POST',
-                        body: formData
-                    });
-                    
-                    const data = await response.json();
 
-                    console.log('Backend response from stt:', data);
-                    
-                    if (data.success) {
-                        // Process the transcript
-                        const transcript = data.transcript;
-                        console.log('Transcript:', transcript);
-                        
-                        // Show user message
-                        const userBubble = document.createElement('div');
-                        userBubble.className = 'user-bubble';
-                        userBubble.textContent = transcript;
-                        messageContainer.appendChild(userBubble);
-                        messageContainer.style.display = 'block';
-                        
-                        statusText.textContent = 'Thinking...';
-                        
-                        // Now get AI response for the transcript
-                        const aiResponse = await fetch('/api/tts', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify({ text: transcript })
-                        });
-                        
-                        const aiData = await aiResponse.json();
-                        
-                        if (aiData.success) {
-                            // Display AI response
-                            simulateResponse(aiData.response);
-                            
-                            // Convert to speech
-                            speakResponse(aiData.response);
-                        } else {
-                            simulateResponse("I'm sorry, I couldn't process your request. Please try again.");
-                        }
-                    } else {
-                        simulateResponse("I couldn't hear you clearly. Could you please try again?");
-                    }
-                } catch (err) {
-                    console.error('Error processing audio:', err);
-                    simulateResponse("There was an error processing your audio. Please try again.");
-                } finally {
-                    isProcessing = false;
-                    statusText.classList.remove('active');
+                AppState.isProcessing = true;
+                AppState.lastProcessedTime = Date.now();
+                console.log(`${AppState.logPrefix} Processing audio blob of size: ${AppState.audioBlob.size} bytes`);
+
+                // Skip processing if the audio is too small to contain meaningful speech
+                if (AppState.audioBlob.size < settings.minAudioSize) {
+                    console.log(`${AppState.logPrefix} Audio too small to contain speech, skipping processing`);
+                    AppState.isProcessing = false;
+
+                    resumeRecordingAfterProcessing();
+                    return;
                 }
-            }
-            
-            async function speakResponse(text) {
+
+                // Create FormData with the audio blob
+                const formData = new FormData();
+                formData.append('audio', AppState.audioBlob);
+
                 try {
-                    // Set the speaking flag to true to prevent the system from listening to itself
-                    settings.isSpeaking = true;
-                    console.log(`${AppState.logPrefix} TTS starting - blocking mic input to prevent feedback`);
-                    
-                    // Fetch TTS audio
-                    const response = await fetch('/api/tts', {
+                    // Step 1: Speech to Text
+                    statusText.textContent = "Converting speech to text...";
+                    console.log(`${AppState.logPrefix} Sending audio to STT API`);
+
+                    const sttResponse = await fetch('/api/stt', {
+                        method: 'POST',
+                        body: formData,
+                        // Add timeout to prevent hanging requests
+                        signal: AbortSignal.timeout(10000) // 10 second timeout
+                    });
+
+                    if (!sttResponse.ok) {
+                        throw new Error(`STT server error: ${sttResponse.status} - ${await sttResponse.text()}`);
+                    }
+
+                    const sttData = await sttResponse.json();
+                    if (!sttData.success) {
+                        throw new Error(sttData.error || 'Failed to transcribe audio');
+                    }
+
+                    const transcript = sttData.transcript;
+                    console.log(`${AppState.logPrefix} Received transcript: "${transcript}"`);
+
+                    if (!transcript || transcript.trim() === '') {
+                        // Silently resume recording without any messages about no speech
+                        console.log(`${AppState.logPrefix} No speech detected in transcription`);
+                        AppState.isProcessing = false;
+                        resumeRecordingAfterProcessing();
+                        return;
+                    }
+
+                    // Skip if transcript contains only filler words
+                    const fillerWords = ['um', 'uh', 'mmm', 'hmm', 'ah', 'er'];
+                    const cleanTranscript = transcript.toLowerCase().trim();
+                    if (fillerWords.some(word => cleanTranscript === word)) {
+                        console.log(`${AppState.logPrefix} Skipping filler: "${cleanTranscript}"`);
+                        AppState.isProcessing = false;
+                        resumeRecordingAfterProcessing();
+                        return;
+                    }
+
+                    // Add user message to conversation log
+                    addToConversationLog(transcript, "user");
+
+                    // Check for pending tool confirmations first
+                    if (AppState.pendingToolAction) {
+                        try {
+                            const wasConfirmation = await processToolConfirmation(transcript);
+                            if (wasConfirmation) {
+                                // If it was a confirmation, we don't need to process further
+                                AppState.isProcessing = false;
+                                resumeRecordingAfterProcessing();
+                                return;
+                            }
+                        } catch (error) {
+                            console.error(`${AppState.logPrefix} Error processing tool confirmation:`, error);
+                        }
+                    }
+
+                    // Step 2: Send to Agent with proper system prompt about capabilities
+                    statusText.textContent = "Getting AI response...";
+                    console.log(`${AppState.logPrefix} Sending transcript to Agent API with capabilities context`);
+
+                    // Create a detailed system prompt that explains the assistant's capabilities
+                    const systemPrompt = `You are DelightMate, a powerful voice assistant with these capabilities:
+
+✅ Writing and sending emails
+✅ Summarizing emails 
+✅ Checking calendar availability
+✅ Adding events to calendars
+✅ Voice conversations
+
+CAPABILITIES GUIDE:
+1. When a user asks you to send an email, respond enthusiastically like "Of course! I'll help you draft that email." NEVER say you can't send emails.
+2. When a user asks about their calendar, respond positively like "Let me check your calendar for you." NEVER say you can't access calendars.
+3. Keep responses concise and conversational.
+
+INTENT DETECTION:
+When you identify a user intent related to a specific tool, include it in your response in this format:
+- For email composition: {"tool": "email", "action": "compose", "params": {"recipient": "NAME", "subject": "SUBJECT"}}
+- For email summary: {"tool": "email", "action": "summarize", "params": {"count": NUMBER}}
+- For calendar checking: {"tool": "calendar", "action": "check", "params": {"date": "DATE"}}
+- For calendar event creation: {"tool": "calendar", "action": "add", "params": {"title": "TITLE", "date": "DATE", "time": "TIME"}}
+If no specific tool intent is detected, return null for the intent.
+
+RESPONSE FORMAT:
+- For regular questions: Provide a helpful, brief response.
+- For email requests: Respond with "I'll help you write that email" or similar and assume you can do it.
+- For calendar requests: Respond with "I'll check your calendar" or similar and assume you can do it.
+- NEVER say you're an AI that can't perform these tasks - you are a voice assistant with these capabilities.
+
+Your response should include both a conversational text reply AND the detected intent object.
+
+The system will handle the actual implementation of these capabilities.`;
+
+                    // Include the transcript and system prompt in the request to OpenAI
+                    const agentRequestBody = {
+                        transcript: transcript,
+                        system_prompt: systemPrompt
+                    };
+
+                    // Send request to the agent API
+                    const agentResponse = await fetch('/api/agent', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'
                         },
-                        body: JSON.stringify({ text: text })
+                        body: JSON.stringify(agentRequestBody),
+                        // Add timeout to prevent hanging requests
+                        signal: AbortSignal.timeout(30000) // 30 second timeout
                     });
-                    
-                    if (!response.ok) {
-                        throw new Error('Failed to convert text to speech');
+
+                    if (!agentResponse.ok) {
+                        throw new Error(`Agent server error: ${agentResponse.status}`);
                     }
-                    
-                    const blob = await response.blob();
-                    const audioURL = URL.createObjectURL(blob);
-                    const audio = new Audio(audioURL);
-                    
-                    // Set up event handlers
-                    audio.onended = () => {
-                        console.log(`${AppState.logPrefix} TTS playback complete - unblocking mic input`);
-                        URL.revokeObjectURL(audioURL);
-                        settings.isSpeaking = false;
-                        // Reset speech detection variables to prevent false triggers
-                        AppState.significantSpeechDetected = false;
-                    };
-                    
-                    // Add safety timeout in case onended doesn't fire
-                    const safetyTimeout = setTimeout(() => {
-                        if (settings.isSpeaking) {
-                            console.log(`${AppState.logPrefix} Safety timeout triggered for TTS`);
-                            URL.revokeObjectURL(audioURL);
-                            settings.isSpeaking = false;
+
+                    const agentData = await agentResponse.json();
+                    if (!agentData.success) {
+                        throw new Error(agentData.error || 'Failed to process with agent');
+                    }
+
+                    console.log(`${AppState.logPrefix} Received agent response:`, agentData);
+
+                    // Extract text response and detected intent from the agent response
+                    const responseText = agentData.response;
+                    const detectedIntent = agentData.intent;
+
+                    // Add AI response to conversation log
+                    addToConversationLog(responseText, "ai");
+
+                    // Convert to speech using TTS API
+                    await processAIResponseTTS(responseText);
+
+                    // After the AI response and TTS, handle the detected tool intent if any
+                    if (detectedIntent) {
+                        try {
+                            console.log(`${AppState.logPrefix} Processing detected intent from AI:`, detectedIntent);
+                            AppState.isProcessingTool = true;
+                            await handleToolIntent(detectedIntent, transcript);
+                            AppState.isProcessingTool = false;
+                        } catch (error) {
+                            console.error(`${AppState.logPrefix} Error handling tool:`, error);
+                            AppState.isProcessingTool = false;
                         }
-                    }, 30000); // 30 second maximum for any TTS playback
-                    
-                    await audio.play();
+                    }
+
+                    // Resume recording after processing is complete
+                    resumeRecordingAfterProcessing();
+
                 } catch (error) {
-                    console.error('TTS Error:', error);
-                    // Make sure to reset the speaking flag in case of error
-                    settings.isSpeaking = false;
+                    console.error(`${AppState.logPrefix} Error:`, error);
+                    statusText.textContent = 'Error: ' + error.message;
+                    addToConversationLog("Sorry, I encountered an error: " + error.message, "ai");
+
+                    // Resume listening after error
+                    setTimeout(() => {
+                        resumeRecordingAfterProcessing();
+                    }, 2000);
+                } finally {
+                    AppState.isProcessing = false;
+                    AppState.pauseDetected = false;
                 }
             }
-            
-            // Tool Functions for Sidebar
-            function showTool(title, content) {
-                const toolSidebar = document.getElementById('toolSidebar');
-                const toolTitle = document.getElementById('toolTitle');
-                const toolContent = document.getElementById('toolContent');
-                
-                // Set tool content
-                toolTitle.textContent = title;
-                toolContent.innerHTML = content;
-                
-                // Show sidebar
-                toolSidebar.style.width = 'var(--sidebar-width)';
-                
-                // Update CSS variables to adjust the main container
-                document.documentElement.style.setProperty('--main-container-width', 'calc(100% - 175px)');
-                document.documentElement.style.setProperty('--main-container-transform', '-75px');
+
+            // Helper function to resume recording after processing
+            function resumeRecordingAfterProcessing() {
+                if (window.resumeRecordingCallback) {
+                    console.log(`${AppState.logPrefix} Calling resume callback after processing`);
+                    const callback = window.resumeRecordingCallback;
+                    window.resumeRecordingCallback = null;
+                    callback();
+                } else {
+                    // Fallback if callback is missing - restart recording directly
+                    console.log(`${AppState.logPrefix} No callback found - using fallback restart`);
+                    if (AppState.conversationActive) {
+                        setTimeout(startRecording, 500);
+                    }
+                }
             }
-            
-            function hideTool() {
-                const toolSidebar = document.getElementById('toolSidebar');
-                toolSidebar.style.width = '0';
-                
-                // Reset main container position using CSS variables
-                document.documentElement.style.setProperty('--main-container-width', '100%');
-                document.documentElement.style.setProperty('--main-container-transform', '0');
+
+            // Helper function specifically for TTS without conversation log (already added by processAIResponse)
+            async function processAIResponseTTS(message) {
+                try {
+                    statusText.textContent = "Converting response to speech...";
+                    console.log(`${AppState.logPrefix} Sending response to TTS API`);
+
+                    const ttsResponse = await fetch('/api/tts', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ text: message }),
+                        // Add timeout to prevent hanging requests
+                        signal: AbortSignal.timeout(15000) // 15 second timeout
+                    });
+
+                    if (!ttsResponse.ok) {
+                        throw new Error(`TTS server error: ${ttsResponse.status}`);
+                    }
+
+                    console.log(`${AppState.logPrefix} Received TTS audio response`);
+
+                    // Play the audio response
+                    const audioBlob = await ttsResponse.blob();
+                    const audioUrl = URL.createObjectURL(audioBlob);
+                    const audioPlayer = new Audio(audioUrl);
+
+                    // Create a Promise that resolves when audio playback completes
+                    return new Promise((resolve, reject) => {
+                        const onEnded = () => {
+                            console.log(`${AppState.logPrefix} Audio playback ended, resuming listening`);
+                            audioPlayer.removeEventListener('ended', onEnded);
+                            audioPlayer.removeEventListener('error', onError);
+                            resolve(true);
+                        };
+
+                        const onError = (error) => {
+                            console.error(`${AppState.logPrefix} Audio playback error:`, error);
+                            audioPlayer.removeEventListener('ended', onEnded);
+                            audioPlayer.removeEventListener('error', onError);
+                            reject(error);
+                        };
+
+                        // Set up event listeners
+                        audioPlayer.addEventListener('ended', onEnded);
+                        audioPlayer.addEventListener('error', onError);
+
+                        statusText.textContent = "Playing response...";
+
+                        // Start playback
+                        audioPlayer.play().catch(error => {
+                            console.error(`${AppState.logPrefix} Error starting audio playback:`, error);
+                            onError(error);
+                        });
+                    });
+                } catch (error) {
+                    console.error(`${AppState.logPrefix} Error during TTS:`, error);
+                    return false;
+                }
             }
-            
-            // Close tool button event listener
-            document.getElementById('closeTool').addEventListener('click', () => {
-                hideTool();
+
+            // Add close conversation button functionality
+            document.getElementById('closeConversation').addEventListener('click', () => {
+                messageContainer.style.display = 'none';
+                // Clear all messages
+                const messages = messageContainer.querySelectorAll('.message');
+                messages.forEach(msg => msg.remove());
             });
-            
-            // Tool detection system - comprehensive version from audio_recorder.html
+
+            // Add message to conversation log function
+            function addToConversationLog(message, sender) {
+                // Show conversation container if hidden
+                messageContainer.style.display = 'block';
+                
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `message ${sender}`;
+                
+                const messageContent = document.createElement('div');
+                messageContent.className = 'message-content';
+                messageContent.textContent = message;
+                
+                messageDiv.appendChild(messageContent);
+                messageContainer.appendChild(messageDiv);
+
+                // Scroll to bottom
+                messageContainer.scrollTop = messageContainer.scrollHeight;
+            }
+
+            // Tool detection system - analyzes transcript to identify tool intents
             function detectToolIntent(transcript) {
                 const text = transcript.toLowerCase();
                 console.log(`${AppState.logPrefix} Analyzing intent for: "${text}"`);
@@ -842,29 +1018,6 @@
                     // Try to extract recipient
                     let recipient = "recipient";
                     let subject = "Meeting Follow-up";
-
-                    // Extract recipient with various patterns
-                    const recipientPatterns = [
-                        /(?:email|mail|send|write)\s+to\s+([a-z0-9\s]+)(?:about|with|saying|regarding)?/i,
-                        /(?:email|mail|send|write)\s+([a-z0-9\s]+)(?:\s+an email|\s+a message)?/i,
-                        /(?:compose|create|draft)(?:\s+an email|\s+a message)?\s+(?:to|for)\s+([a-z0-9\s]+)/i
-                    ];
-
-                    for (const pattern of recipientPatterns) {
-                        const match = text.match(pattern);
-                        if (match && match[1]) {
-                            recipient = match[1].trim();
-                            break;
-                        }
-                    }
-
-                    // Extract subject if mentioned
-                    const subjectMatch = text.match(/about\s+["']?([^"']+)["']?/i) ||
-                        text.match(/(?:with|regarding)\s+(?:the\s+)?(?:subject|title)\s+["']?([^"']+)["']?/i);
-
-                    if (subjectMatch && subjectMatch[1]) {
-                        subject = subjectMatch[1].trim();
-                    }
 
                     console.log(`${AppState.logPrefix} Detected email intent with recipient: ${recipient}, subject: ${subject}`);
 
@@ -881,12 +1034,6 @@
 
                     // Try to extract count
                     let count = 3; // Default
-                    const countMatch = text.match(/(\d+)\s+(?:emails|messages|recent)/i) ||
-                        text.match(/(?:emails|messages|recent)\s+(\d+)/i);
-
-                    if (countMatch && countMatch[1]) {
-                        count = parseInt(countMatch[1], 10);
-                    }
 
                     console.log(`${AppState.logPrefix} Detected email summary intent for ${count} emails`);
 
@@ -906,19 +1053,6 @@
 
                     // Try to extract date
                     let date = "today";
-                    const datePatterns = [
-                        /(?:calendar|schedule|availability)(?:\s+for|\s+on)?\s+([a-z0-9\s,]+)/i,
-                        /(?:free|busy|available)(?:\s+on|\s+during)?\s+([a-z0-9\s,]+)/i,
-                        /what(?:'s|\s+is)(?:\s+my)?\s+(?:schedule|calendar)(?:\s+for|\s+on)?\s+([a-z0-9\s,]+)/i
-                    ];
-
-                    for (const pattern of datePatterns) {
-                        const match = text.match(pattern);
-                        if (match && match[1]) {
-                            date = match[1].trim();
-                            break;
-                        }
-                    }
 
                     console.log(`${AppState.logPrefix} Detected calendar check intent for date: ${date}`);
 
@@ -929,328 +1063,210 @@
                     };
                 }
 
-                // Calendar add event detection
-                if ((text.includes("add") || text.includes("create") || text.includes("schedule") || text.includes("set up")) &&
-                    (text.includes("event") || text.includes("meeting") || text.includes("appointment") || text.includes("reminder")) &&
-                    (text.includes("calendar") || text.includes("schedule"))) {
-
-                    // Extract event details
-                    let title = "New Event";
-                    let date = "today";
-                    let time = "12:00";
-
-                    // Extract title
-                    const titlePatterns = [
-                        /(?:add|create|schedule|set up)(?:\s+a|\s+an)?\s+(?:event|meeting|appointment|reminder)(?:\s+called|\s+titled|\s+named)?\s+["']?([^"']+)["']?/i,
-                        /(?:add|create|schedule|set up)(?:\s+a|\s+an)?\s+["']?([^"']+)["']?(?:\s+event|\s+meeting|\s+appointment|\s+reminder)/i
-                    ];
-
-                    for (const pattern of titlePatterns) {
-                        const match = text.match(pattern);
-                        if (match && match[1]) {
-                            title = match[1].trim();
-                            break;
-                        }
-                    }
-
-                    // Extract date and time
-                    const dateTimePatterns = [
-                        /(?:on|for)\s+([a-z0-9\s,]+)(?:\s+at)?\s+(?:at\s+)?(\d{1,2}(?::\d{2})?\s*(?:am|pm)?)/i,
-                        /(?:at|on)\s+(\d{1,2}(?::\d{2})?\s*(?:am|pm)?)(?:\s+on)?\s+([a-z0-9\s,]+)/i
-                    ];
-
-                    for (const pattern of dateTimePatterns) {
-                        const match = text.match(pattern);
-                        if (match) {
-                            if (match[1] && match[2]) {
-                                // Check which is date and which is time
-                                if (match[1].match(/\d{1,2}(?::\d{2})?\s*(?:am|pm)?/i)) {
-                                    time = match[1].trim();
-                                    date = match[2].trim();
-                                } else {
-                                    date = match[1].trim();
-                                    time = match[2].trim();
-                                }
-                                break;
-                            }
-                        }
-                    }
-
-                    console.log(`${AppState.logPrefix} Detected calendar add intent - Title: ${title}, Date: ${date}, Time: ${time}`);
-
-                    return {
-                        tool: "calendar",
-                        action: "add",
-                        params: { title, date, time }
-                    };
-                }
-
                 // No tool intent detected
                 console.log(`${AppState.logPrefix} No tool intent detected, treating as conversation`);
                 return null;
             }
-            
-            // Handle tool intent based on detected parameters
-            function handleToolIntent(toolIntent, transcript) {
-                if (!toolIntent) return false;
-                
+
+            // Handle tool activation based on detected intent
+            async function handleToolIntent(toolIntent, transcript) {
                 console.log(`${AppState.logPrefix} Handling tool intent:`, toolIntent);
-                
-                if (toolIntent.tool === 'email') {
-                    if (toolIntent.action === 'compose') {
-                        handleEmailCompose(toolIntent.params.recipient, toolIntent.params.subject, transcript);
-                        return true;
-                    } else if (toolIntent.action === 'summarize') {
-                        handleEmailSummarize(toolIntent.params.count, transcript);
-                        return true;
+
+                if (!toolIntent) return false;
+
+                try {
+                    switch (toolIntent.tool) {
+                        case "email":
+                            if (toolIntent.action === "compose") {
+                                await handleEmailCompose(toolIntent.params, transcript);
+                                return true;
+                            } else if (toolIntent.action === "summarize") {
+                                await handleEmailSummarize(toolIntent.params, transcript);
+                                return true;
+                            }
+                            break;
+
+                        case "calendar":
+                            if (toolIntent.action === "check") {
+                                await handleCalendarCheck(toolIntent.params, transcript);
+                                return true;
+                            } else if (toolIntent.action === "add") {
+                                await handleCalendarAdd(toolIntent.params, transcript);
+                                return true;
+                            }
+                            break;
                     }
-                } else if (toolIntent.tool === 'calendar') {
-                    if (toolIntent.action === 'check') {
-                        handleCalendarCheck(toolIntent.params.date, transcript);
-                        return true;
-                    } else if (toolIntent.action === 'add') {
-                        handleCalendarAdd(toolIntent.params.title, toolIntent.params.date, toolIntent.params.time, transcript);
-                        return true;
-                    }
+
+                    return false;
+                } catch (error) {
+                    console.error(`${AppState.logPrefix} Error handling tool intent:`, error);
+                    addToConversationLog(`I'm sorry, I encountered an error while trying to ${toolIntent.action} ${toolIntent.tool}. Please try again.`, "ai");
+                    return true; // Return true to prevent normal conversation flow
                 }
-                
+            }
+
+            // Process user confirmation for pending actions
+            async function processToolConfirmation(transcript) {
+                if (!AppState.pendingToolAction) {
+                    return false;
+                }
+
+                const affirmativeResponses = ['yes', 'yeah', 'sure', 'okay', 'ok', 'yep', 'correct', 'confirm', 'do it', 'please do', 'send it', 'that\'s right', 'sounds good', 'go ahead', 'definitely'];
+                const negativeResponses = ['no', 'nope', 'cancel', 'don\'t', 'stop', 'wait', 'hold on', 'incorrect', 'that\'s wrong', 'nevermind', 'forget it', 'don\'t do that'];
+
+                const cleanTranscript = transcript.toLowerCase().trim();
+
+                // Check if the response is affirmative
+                if (affirmativeResponses.some(response => cleanTranscript.includes(response))) {
+                    console.log(`${AppState.logPrefix} Detected affirmative response: "${cleanTranscript}"`);
+                    await executeToolAction(AppState.pendingToolAction, true);
+                    AppState.pendingToolAction = null;
+                    return true;
+                }
+
+                // Check if the response is negative
+                if (negativeResponses.some(response => cleanTranscript.includes(response))) {
+                    console.log(`${AppState.logPrefix} Detected negative response: "${cleanTranscript}"`);
+                    addToConversationLog("I've canceled that action. Is there anything else you'd like me to do?", "ai");
+                    hideTool();
+                    AppState.pendingToolAction = null;
+                    return true;
+                }
+
+                // If the response doesn't match confirmation patterns, return false
                 return false;
             }
-            
-            // Handle email composition
-            function handleEmailCompose(recipient, subject, transcript) {
-                const emailContent = `
-                    <div class="email-form">
-                        <div class="email-field">
-                            <label>To:</label>
-                            <input type="text" id="emailTo" value="${recipient}">
-                        </div>
-                        <div class="email-field">
-                            <label>Subject:</label>
-                            <input type="text" id="emailSubject" value="${subject}" placeholder="Email subject">
-                        </div>
-                        <div class="email-field">
-                            <label>Message:</label>
-                            <textarea id="emailBody" rows="10" placeholder="Compose your message here..."></textarea>
-                        </div>
-                        <div class="tool-buttons">
-                            <button id="cancelEmail" class="tool-button secondary">Cancel</button>
-                            <button id="sendEmail" class="tool-button primary">Send Email</button>
-                        </div>
-                    </div>
-                `;
-                
-                showTool('Compose Email', emailContent);
-                
-                // Add event listeners for the buttons
-                setTimeout(() => {
-                    document.getElementById('cancelEmail')?.addEventListener('click', hideTool);
-                    document.getElementById('sendEmail')?.addEventListener('click', () => {
-                        simulateResponse("Email sent to " + document.getElementById('emailTo').value + "!");
-                        hideTool();
-                    });
-                }, 100);
+
+            // Execute the confirmed tool action
+            async function executeToolAction(toolAction, isConfirmed) {
+                if (!isConfirmed || !toolAction) {
+                    return;
+                }
+
+                console.log(`${AppState.logPrefix} Executing tool action:`, toolAction);
+
+                try {
+                    switch (toolAction.tool) {
+                        case "email":
+                            if (toolAction.action === "send") {
+                                // Brief status update only
+                                statusText.textContent = "Sending email...";
+
+                                // Simulate a brief waiting period
+                                await new Promise(resolve => setTimeout(resolve, 1500));
+
+                                // Concise confirmation
+                                addToConversationLog(`Email sent to ${toolAction.params.to}.`, "ai");
+                                hideTool();
+
+                                // Deactivate the tool
+                                AppState.deactivateTool();
+                            }
+                            break;
+
+                        case "calendar":
+                            if (toolAction.action === "create") {
+                                const title = toolAction.params.title;
+                                const date = toolAction.params.date;
+
+                                // Update the status text only (no TTS)
+                                statusText.textContent = "Creating calendar event...";
+
+                                // Simulate a brief waiting period
+                                await new Promise(resolve => setTimeout(resolve, 1500));
+
+                                // Concise confirmation with TTS
+                                addToConversationLog(`Event "${title}" added to calendar.`, "ai");
+                                hideTool();
+
+                                // Deactivate the tool
+                                AppState.deactivateTool();
+                            }
+                            break;
+                    }
+                } catch (error) {
+                    console.error(`${AppState.logPrefix} Error executing tool action:`, error);
+                    addToConversationLog("Action failed. Please try again.", "ai");
+                    hideTool();
+
+                    // Make sure to deactivate the tool on error
+                    AppState.deactivateTool();
+                }
             }
-            
-            // Handle email summarize
-            function handleEmailSummarize(count, transcript) {
-                const emailContent = `
-                    <div class="email-summary">
-                        <h3>Email Summary</h3>
-                        <div class="email-list">
-                            <div class="email-item">
-                                <div class="email-header">
-                                    <div class="email-sender">John Smith</div>
-                                    <div class="email-time">10:30 AM</div>
-                                </div>
-                                <div class="email-subject">Project Update</div>
-                                <div class="email-preview">Here's the latest on the DelightMate project...</div>
-                            </div>
-                            <div class="email-item">
-                                <div class="email-header">
-                                    <div class="email-sender">Sarah Johnson</div>
-                                    <div class="email-time">Yesterday</div>
-                                </div>
-                                <div class="email-subject">Meeting Notes</div>
-                                <div class="email-preview">Attached are the notes from our meeting...</div>
-                            </div>
-                            <div class="email-item">
-                                <div class="email-header">
-                                    <div class="email-sender">Tech Team</div>
-                                    <div class="email-time">Feb 10</div>
-                                </div>
-                                <div class="email-subject">New Feature Announcement</div>
-                                <div class="email-preview">We're excited to announce the launch of...</div>
-                            </div>
-                        </div>
-                        <div class="tool-buttons">
-                            <button id="closeEmailSummary" class="tool-button primary">Close</button>
-                        </div>
-                    </div>
+
+            // Placeholder tool handlers - you can implement these as needed
+            async function handleEmailCompose(params, transcript) {
+                console.log(`${AppState.logPrefix} Handling email compose tool`);
+                showTool("Email");
+                // For now, just show a simple message
+                document.getElementById('toolContent').innerHTML = `
+                    <p>Email composition tool would appear here.</p>
+                    <p>Recipient: ${params.recipient}</p>
+                    <p>Subject: ${params.subject}</p>
                 `;
-                
-                showTool('Email Summary', emailContent);
-                
-                // Add event listener for the close button
-                setTimeout(() => {
-                    document.getElementById('closeEmailSummary')?.addEventListener('click', hideTool);
-                }, 100);
             }
-            
-            // Handle calendar check
-            function handleCalendarCheck(date, transcript) {
-                const calendarContent = `
-                    <div class="calendar-view">
-                        <h3>Calendar for ${date}</h3>
-                        <div class="calendar-day">
-                            <div class="calendar-event">
-                                <div class="event-time">9:00 AM - 10:00 AM</div>
-                                <div class="event-title">Team Stand-up</div>
-                            </div>
-                            <div class="calendar-event">
-                                <div class="event-time">11:30 AM - 12:30 PM</div>
-                                <div class="event-title">Client Meeting</div>
-                            </div>
-                            <div class="calendar-event">
-                                <div class="event-time">2:00 PM - 3:30 PM</div>
-                                <div class="event-title">Design Review</div>
-                            </div>
-                        </div>
-                        <div class="tool-buttons">
-                            <button id="closeCalendarCheck" class="tool-button primary">Close</button>
-                        </div>
-                    </div>
+
+            async function handleEmailSummarize(params, transcript) {
+                console.log(`${AppState.logPrefix} Handling email summarize tool`);
+                showTool("Email Summary");
+                document.getElementById('toolContent').innerHTML = `
+                    <p>Email summary for ${params.count} recent emails would appear here.</p>
                 `;
-                
-                showTool(`Calendar: ${date}`, calendarContent);
-                
-                // Add event listener for the close button
-                setTimeout(() => {
-                    document.getElementById('closeCalendarCheck')?.addEventListener('click', hideTool);
-                }, 100);
             }
-            
-            // Handle calendar add event
-            function handleCalendarAdd(title, date, time, transcript) {
-                const calendarContent = `
-                    <div class="calendar-form">
-                        <div class="calendar-field">
-                            <label>Event:</label>
-                            <input type="text" id="eventTitle" value="${title}" placeholder="Event title">
-                        </div>
-                        <div class="calendar-field">
-                            <label>Date:</label>
-                            <input type="date" id="eventDate" value="${date === 'today' ? new Date().toISOString().split('T')[0] : date}">
-                        </div>
-                        <div class="calendar-field">
-                            <label>Time:</label>
-                            <input type="time" id="eventTime" value="${time.includes(':') ? time : time + ':00'}">
-                        </div>
-                        <div class="calendar-field">
-                            <label>Attendees:</label>
-                            <input type="text" id="eventAttendees" placeholder="Add attendees (optional)">
-                        </div>
-                        <div class="tool-buttons">
-                            <button id="cancelCalendarAdd" class="tool-button secondary">Cancel</button>
-                            <button id="addCalendarEvent" class="tool-button primary">Add to Calendar</button>
-                        </div>
-                    </div>
+
+            async function handleCalendarCheck(params, transcript) {
+                console.log(`${AppState.logPrefix} Handling calendar check tool`);
+                showTool("Calendar");
+                document.getElementById('toolContent').innerHTML = `
+                    <p>Calendar for ${params.date} would appear here.</p>
                 `;
-                
-                showTool('Add Calendar Event', calendarContent);
-                
-                // Add event listeners for the buttons
-                setTimeout(() => {
-                    document.getElementById('cancelCalendarAdd')?.addEventListener('click', hideTool);
-                    document.getElementById('addCalendarEvent')?.addEventListener('click', () => {
-                        const eventTitle = document.getElementById('eventTitle').value;
-                        simulateResponse(`Added "${eventTitle}" to your calendar!`);
-                        hideTool();
-                    });
-                }, 100);
             }
-            
-            // Add custom styles for tool UI components
-            const styleElement = document.createElement('style');
-            styleElement.textContent = `
-                .email-form, .calendar-form, .calendar-view, .email-summary {
-                    display: flex;
-                    flex-direction: column;
-                    gap: 15px;
-                    color: var(--text-color);
+
+            async function handleCalendarAdd(params, transcript) {
+                console.log(`${AppState.logPrefix} Handling calendar add tool`);
+                showTool("Calendar Event");
+                document.getElementById('toolContent').innerHTML = `
+                    <p>Add calendar event form would appear here.</p>
+                    <p>Title: ${params.title}</p>
+                    <p>Date: ${params.date}</p>
+                    <p>Time: ${params.time}</p>
+                `;
+            }
+
+            // Tool UI functions
+            function showTool(title) {
+                const toolSidebar = document.getElementById('toolSidebar');
+                const toolTitle = document.getElementById('toolTitle');
+
+                if (toolSidebar && toolTitle) {
+                    toolTitle.textContent = title || 'Tool';
+                    toolSidebar.style.width = '400px';
+                    document.getElementById('toolContent').innerHTML = '';
+                } else {
+                    console.error(`${AppState.logPrefix} Tool UI elements not found`);
                 }
-                
-                .email-field, .calendar-field {
-                    display: flex;
-                    flex-direction: column;
-                    gap: 8px;
+            }
+
+            function hideTool() {
+                const toolSidebar = document.getElementById('toolSidebar');
+
+                if (toolSidebar) {
+                    toolSidebar.style.width = '0';
+                    document.getElementById('toolContent').innerHTML = '';
+                } else {
+                    console.error(`${AppState.logPrefix} Tool UI element not found`);
                 }
-                
-                .email-field label, .calendar-field label {
-                    font-weight: bold;
-                    font-size: 0.9rem;
-                }
-                
-                .email-field input, .email-field textarea, .calendar-field input {
-                    padding: 10px;
-                    border: 1px solid rgba(125, 125, 125, 0.5);
-                    border-radius: 6px;
-                    background-color: rgba(255, 255, 255, 0.05);
-                    color: var(--text-color);
-                }
-                
-                .tool-buttons {
-                    display: flex;
-                    justify-content: flex-end;
-                    gap: 10px;
-                    margin-top: 15px;
-                }
-                
-                .tool-button {
-                    padding: 8px 16px;
-                    border-radius: 6px;
-                    cursor: pointer;
-                    font-weight: bold;
-                }
-                
-                .tool-button.primary {
-                    background: #50b3a2;
-                    color: white;
-                    border: none;
-                }
-                
-                .tool-button.secondary {
-                    background: rgba(125, 125, 125, 0.2);
-                    color: var(--text-color);
-                    border: 1px solid rgba(125, 125, 125, 0.5);
-                }
-                
-                .email-summary, .calendar-view {
-                    padding: 10px;
-                }
-                
-                .email-item, .calendar-event {
-                    border: 1px solid rgba(125, 125, 125, 0.3);
-                    border-radius: 8px;
-                    padding: 12px;
-                    margin-bottom: 10px;
-                    background-color: rgba(255, 255, 255, 0.05);
-                }
-                
-                .email-header, .event-time {
-                    display: flex;
-                    justify-content: space-between;
-                    margin-bottom: 5px;
-                    font-weight: bold;
-                }
-                
-                .email-subject, .event-title {
-                    font-weight: bold;
-                    margin-bottom: 5px;
-                }
-            `;
-            document.head.appendChild(styleElement);
-            
+            }
+
+            // Close tool button event listener
+            document.getElementById('closeTool').addEventListener('click', () => {
+                hideTool();
+            });
+
+            // Initialize on load
+            AppState.isProcessingTool = false;
+            console.log(`${AppState.logPrefix} Voice Assistant initialized on homepage`);
+
             // Create cosmic particles in the sphere
             function createCosmicParticles() {
                 const colors = ['white', 'blue', 'cyan', 'purple', 'pink'];
@@ -1306,12 +1322,9 @@
             
             // Start listening animation
             function startListening() {
-                isListening = true;
                 document.body.classList.add('listening');
                 statusText.classList.add('active');
-                statusText.textContent = 'Listening...';
                 cosmosSphere.classList.add('pulsate');
-                messageContainer.style.display = 'none';
                 
                 // Make particles bulge with microphone input (real-time audio will handle this)
                 const particles = document.querySelectorAll('.particle');
@@ -1320,76 +1333,52 @@
                     const randomDelay = Math.random() * 0.5;
                     particle.style.setProperty('--particle-delay', randomDelay);
                 });
+
+                // Setup visualization animation
+                function animate() {
+                    if (!AppState.isRecording) return;
+                    
+                    const bufferLength = AppState.analyser.frequencyBinCount;
+                    const dataArray = new Uint8Array(bufferLength);
+                    AppState.analyser.getByteFrequencyData(dataArray);
+                    
+                    // Calculate average volume
+                    let sum = 0;
+                    for (let i = 0; i < bufferLength; i++) {
+                        sum += dataArray[i];
+                    }
+                    const average = sum / bufferLength;
+                    
+                    // Scale particles based on volume
+                    const particles = document.querySelectorAll('.particle');
+                    const scale = 1 + (average / 256) * 0.5; // Scale between 1 and 1.5
+                    
+                    // Make cosmos sphere pulsate based on audio level
+                    const pulseScale = 1 + (average / 256) * 0.1; // Subtle pulse effect
+                    cosmosSphere.style.transform = `scale(${pulseScale})`;
+                    
+                    particles.forEach(particle => {
+                        particle.style.transform = `scale(${scale})`;
+                    });
+                    
+                    requestAnimationFrame(animate);
+                }
+                
+                animate();
             }
             
             // Stop listening animation
             function stopListening() {
-                isListening = false;
                 document.body.classList.remove('listening');
                 statusText.classList.remove('active');
                 cosmosSphere.classList.remove('pulsate');
                 cosmosSphere.style.transform = '';
-                
-                // Show welcome message after response is displayed
-                setTimeout(() => {
-                    const welcomeMessage = document.getElementById('welcomeMessage');
-                    if (welcomeMessage && !messageContainer.style.display || messageContainer.style.display === 'none') {
-                        welcomeMessage.style.opacity = '0.95';
-                        welcomeMessage.style.transform = 'translateY(-100px)';
-                    }
-                }, 1000);
                 
                 // Reset particles
                 const particles = document.querySelectorAll('.particle');
                 particles.forEach(particle => {
                     particle.style.transform = '';
                 });
-            }
-            
-            // Display AI response with animation
-            // Add message to conversation log (user or AI)
-            function addToConversationLog(message, sender) {
-                // Make sure the message container is visible
-                messageContainer.style.display = 'block';
-                
-                // Create a new message bubble with proper alignment
-                const messageBubble = document.createElement('div');
-                if (sender === 'user') {
-                    messageBubble.className = 'message-bubble user-message';
-                    messageBubble.style.cssText = 'background-color: #e3f2fd; color: #0d47a1; border-radius: 18px; padding: 12px; margin: 8px 0; border-bottom-right-radius: 4px; margin-left: auto; max-width: 80%; word-wrap: break-word; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1); animation: message-appear 0.3s ease-out;';
-                } else {
-                    messageBubble.className = 'message-bubble ai-message';
-                    messageBubble.style.cssText = 'background-color: #f1f1f1; color: #333; border-radius: 18px; padding: 12px; margin: 8px 0; border-bottom-left-radius: 4px; margin-right: auto; max-width: 80%; word-wrap: break-word; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1); animation: message-appear 0.3s ease-out;';
-                }
-                
-                messageContainer.appendChild(messageBubble);
-                
-                // Animate text appearing word by word
-                const words = message.split(' ');
-                if (sender === 'ai') {
-                    responseMessage.textContent = ''; // Clear existing text for screen readers
-                }
-                
-                let wordIndex = 0;
-                const wordInterval = setInterval(() => {
-                    if (wordIndex < words.length) {
-                        messageBubble.textContent += (wordIndex === 0 ? '' : ' ') + words[wordIndex];
-                        if (sender === 'ai') {
-                            responseMessage.textContent = messageBubble.textContent; // For screen readers
-                        }
-                        wordIndex++;
-                    } else {
-                        clearInterval(wordInterval);
-                    }
-                }, 50);
-                
-                // Scroll to the bottom of the container
-                messageContainer.scrollTop = messageContainer.scrollHeight;
-            }
-
-            // Display AI response (wrapper for addToConversationLog)
-            function simulateResponse(text) {
-                addToConversationLog(text, 'ai');
             }
         });
     </script>

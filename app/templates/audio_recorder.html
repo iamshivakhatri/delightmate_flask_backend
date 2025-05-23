@@ -43,15 +43,7 @@
 
         /* Main control section */
         .controls {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            margin-bottom: 60px;
-            background: white;
-            border-radius: 24px;
-            padding: 60px 40px;
-            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.04);
-            border: 1px solid rgba(255, 255, 255, 0.8);
+            display: none;
         }
 
         /* Record button - Apple-inspired */
@@ -214,10 +206,25 @@
             gap: 40px;
             margin-top: 40px;
             min-height: 600px;
+            align-items: flex-start;
         }
 
-        /* Conversation container */
+        /* Main controls section - now takes up left side */
+        .main-controls-section {
+            flex: 1;
+            background: white;
+            border-radius: 24px;
+            padding: 60px 40px;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* Conversation container - hidden by default */
         .conversation-container {
+            display: none;
             flex: 1;
             background: white;
             border-radius: 20px;
@@ -274,7 +281,7 @@
             border: 1px solid #e2e8f0;
         }
 
-        /* Tool sidebar */
+        /* Tool sidebar - now appears on the right side */
         .tool-sidebar {
             flex: 0 0 45%;
             background: white;
@@ -622,7 +629,7 @@
                 margin-bottom: 30px;
             }
 
-            .controls {
+            .main-controls-section {
                 padding: 40px 20px;
             }
 
@@ -644,6 +651,7 @@
             .manual-buttons {
                 flex-direction: column;
                 align-items: center;
+                gap: 8px;
             }
 
             button {
@@ -682,64 +690,33 @@
     <div class="container">
         <h1>DelightMate Voice Assistant</h1>
 
-        <div class="controls">
-            <div class="record-button" id="recordButton">
-                <svg width="40" height="40" viewBox="0 0 24 24" fill="white">
-                    <path
-                        d="M12,2A3,3 0 0,1 15,5V11A3,3 0 0,1 12,14A3,3 0 0,1 9,11V5A3,3 0 0,1 12,2M19,11C19,14.53 16.39,17.44 13,17.93V21H11V17.93C7.61,17.44 5,14.53 5,11H7A5,5 0 0,0 12,16A5,5 0 0,0 17,11H19Z" />
-                </svg>
-            </div>
-            
-            <div>
-                <button id="startButton">Start Conversation</button>
-                <button id="stopButton" disabled>End Conversation</button>
-            </div>
-            
-            <div class="manual-buttons">
-                <button id="manualPauseButton" disabled>Manual Send</button>
-                <button id="toggleSettingsButton">Show Settings</button>
-            </div>
-            
-            <div class="status" id="status">Ready to start conversation...</div>
-
-            <div class="audio-visualizer">
-                <canvas id="visualizerCanvas" class="visualizer-canvas"></canvas>
-            </div>
-
-            <div class="volume-meter">
-                <div class="volume-level" id="volumeLevel"></div>
-            </div>
-        </div>
-
-        <div class="settings-panel" id="settingsPanel" style="display: none;">
-            <h3>Settings</h3>
-            <div class="settings-row">
-                <label for="silenceThreshold">Silence Threshold:</label>
-                <input type="number" id="silenceThreshold" min="1" max="30" value="15">
-            </div>
-            <div class="settings-row">
-                <label for="pauseThreshold">Pause Duration (seconds):</label>
-                <input type="number" id="pauseThreshold" min="0.5" max="5" step="0.1" value="2.0">
-            </div>
-            <div class="settings-row">
-                <label for="echoCancel">Echo Cancellation:</label>
-                <input type="checkbox" id="echoCancel" checked>
-            </div>
-            <div class="settings-row">
-                <label for="noiseSuppress">Noise Suppression:</label>
-                <input type="checkbox" id="noiseSuppress" checked>
-            </div>
-            <div class="settings-row">
-                <label for="continuousMode">Continuous Mode:</label>
-                <input type="checkbox" id="continuousMode" checked>
-            </div>
-            <div class="debug-info" id="debugInfo"></div>
-        </div>
-
         <div class="app-container">
-            <div class="conversation-container">
-                <div class="conversation-log" id="conversationLog">
-                    <div class="ai-message">Welcome! I'm your DelightMate assistant. Click "Start Conversation" to begin.</div>
+            <div class="main-controls-section">
+                <div class="record-button" id="recordButton">
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="white">
+                        <path
+                            d="M12,2A3,3 0 0,1 15,5V11A3,3 0 0,1 12,14A3,3 0 0,1 9,11V5A3,3 0 0,1 12,2M19,11C19,14.53 16.39,17.44 13,17.93V21H11V17.93C7.61,17.44 5,14.53 5,11H7A5,5 0 0,0 12,16A5,5 0 0,0 17,11H19Z" />
+                    </svg>
+                </div>
+                
+                <div>
+                    <button id="startButton">Start Conversation</button>
+                    <button id="stopButton" disabled>End Conversation</button>
+                </div>
+                
+                <div class="manual-buttons">
+                    <button id="manualPauseButton" disabled>Manual Send</button>
+                    <button id="toggleSettingsButton">Show Settings</button>
+                </div>
+                
+                <div class="status" id="status">Ready to start conversation...</div>
+
+                <div class="audio-visualizer">
+                    <canvas id="visualizerCanvas" class="visualizer-canvas"></canvas>
+                </div>
+
+                <div class="volume-meter">
+                    <div class="volume-level" id="volumeLevel"></div>
                 </div>
             </div>
 
@@ -755,6 +732,37 @@
         </div>
 
         <audio id="audioPlayer" class="audio-player" style="display: none;"></audio>
+    </div>
+
+    <div class="settings-panel" id="settingsPanel" style="display: none;">
+        <h3>Settings</h3>
+        <div class="settings-row">
+            <label for="silenceThreshold">Silence Threshold:</label>
+            <input type="number" id="silenceThreshold" min="1" max="30" value="15">
+        </div>
+        <div class="settings-row">
+            <label for="pauseThreshold">Pause Duration (seconds):</label>
+            <input type="number" id="pauseThreshold" min="0.5" max="5" step="0.1" value="2.0">
+        </div>
+        <div class="settings-row">
+            <label for="echoCancel">Echo Cancellation:</label>
+            <input type="checkbox" id="echoCancel" checked>
+        </div>
+        <div class="settings-row">
+            <label for="noiseSuppress">Noise Suppression:</label>
+            <input type="checkbox" id="noiseSuppress" checked>
+        </div>
+        <div class="settings-row">
+            <label for="continuousMode">Continuous Mode:</label>
+            <input type="checkbox" id="continuousMode" checked>
+        </div>
+        <div class="debug-info" id="debugInfo"></div>
+    </div>
+
+    <div class="conversation-container" id="conversationContainer">
+        <div class="conversation-log" id="conversationLog">
+            <div class="ai-message">Welcome! I'm your DelightMate assistant. Click "Start Conversation" to begin.</div>
+        </div>
     </div>
 
     <script>
